@@ -117,10 +117,11 @@ jobs:
         working-directory: python
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
-      - run: |
-          ls python/logs/
-          tail -n +1 python/logs/*.log
+      - uses: actions/upload-artifact@v3
         if: always()
+        with:
+          name: unit-tests-logs
+          path: "python/logs/*"
 
 
   unit-tests-alpine:
@@ -200,8 +201,11 @@ jobs:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN }}
           RELEASING_PACKAGE: ${{ inputs.releasing_package }}
           TEST_REPORT_SANDBOX: ${{ inputs.releasing_package && 'False' || 'True'}}
-      - run: tail -n +1 python/logs/*.log
+      - uses: actions/upload-artifact@v3
         if: always()
+        with:
+          name: generated-tests-logs
+          path: "python/logs/*"
 
 
   functional-tests:
