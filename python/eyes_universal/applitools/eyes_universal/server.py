@@ -1,6 +1,8 @@
 import sys
 from logging import getLogger
+from random import random
 from subprocess import PIPE, Popen  # nosec
+from time import sleep
 
 from pkg_resources import resource_filename
 
@@ -14,6 +16,7 @@ class SDKServer(object):
     log_file_name = None  # backward compatibility with eyes-selenium<=5.6
 
     def __init__(self):
+        sleep(random() * 10)
         """Start eyes-universal service subprocess and obtain its port number."""
         command = [executable_path, "--no-singleton", "--shutdown-mode", "stdin"]
         # Capture and keep stdin reference to notify USDK when it should terminate.
