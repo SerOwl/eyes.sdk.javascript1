@@ -117,7 +117,9 @@ jobs:
         working-directory: python
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
-      - run: tail -n +1 python/logs/*.log
+      - run: |
+          ls python/logs/
+          tail -n +1 python/logs/*.log
         if: always()
 
 
