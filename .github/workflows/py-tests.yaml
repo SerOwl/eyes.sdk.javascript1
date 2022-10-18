@@ -113,7 +113,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: packages
-      - run: APPLITOOLS_LOG_DIR=`pwd`/logs make eyes_selenium_unit_tests
+      - run: mkdir logs && APPLITOOLS_LOG_DIR=`pwd`/logs make eyes_selenium_unit_tests
         shell: bash
         working-directory: python
         env:
