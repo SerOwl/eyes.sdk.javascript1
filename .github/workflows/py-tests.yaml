@@ -118,7 +118,10 @@ jobs:
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
           APPLITOOLS_LOG_DIR: logs
-      - run: tail -n +1 logs/*.log
+      - run: |
+          echo logs/*.log
+          echo `echo logs/*.log`
+          tail -n +1 logs/*.log
         if: always()
 
 
