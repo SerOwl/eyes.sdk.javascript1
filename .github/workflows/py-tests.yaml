@@ -119,9 +119,10 @@ jobs:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
           APPLITOOLS_LOG_DIR: logs
       - run: |
-          echo logs/*.log
-          echo `echo logs/*.log`
-          tail -n +1 logs/*.log
+          ls python/logs
+          echo python/logs/*.log
+          echo `echo python/logs/*.log`
+          tail -n +1 python/logs/*.log
         if: always()
 
 
