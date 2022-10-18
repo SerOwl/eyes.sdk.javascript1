@@ -113,7 +113,8 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: packages
-      - run: export APPLITOOLS_LOG_DIR=`pwd`/logs && make eyes_selenium_unit_tests
+      - run: APPLITOOLS_LOG_DIR=`pwd`/logs make eyes_selenium_unit_tests
+        shell: bash
         working-directory: python
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
@@ -191,7 +192,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: packages
-      - run: export APPLITOOLS_LOG_DIR=`pwd`/logs && make eyes_selenium_generated_tests
+      - run: APPLITOOLS_LOG_DIR=`pwd`/logs make eyes_selenium_generated_tests
         working-directory: python
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
