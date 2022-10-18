@@ -113,16 +113,11 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: packages
-      - run: make eyes_selenium_unit_tests
+      - run: APPLITOOLS_LOG_DIR=`pwd`/logs make eyes_selenium_unit_tests
         working-directory: python
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
-          APPLITOOLS_LOG_DIR: logs
-      - run: |
-          ls python/logs
-          echo python/logs/*.log
-          echo `echo python/logs/*.log`
-          tail -n +1 python/logs/*.log
+      - run: tail -n +1 python/logs/*.log
         if: always()
 
 
@@ -193,7 +188,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: packages
-      - run: make eyes_selenium_generated_tests
+      - run: APPLITOOLS_LOG_DIR=`pwd`/logs make eyes_selenium_generated_tests
         working-directory: python
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
@@ -203,6 +198,9 @@ jobs:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN }}
           RELEASING_PACKAGE: ${{ inputs.releasing_package }}
           TEST_REPORT_SANDBOX: ${{ inputs.releasing_package && 'False' || 'True'}}
+      - run: tail -n +1 python/logs/*.log
+        if: always()
+
 
   functional-tests:
     needs: dist-build
