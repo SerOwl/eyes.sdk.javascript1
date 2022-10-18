@@ -117,6 +117,10 @@ jobs:
         working-directory: python
         env:
           APPLITOOLS_API_KEY: ${{ secrets.APPLITOOLS_API_KEY }}
+          APPLITOOLS_LOG_DIR: logs
+      - run: tail -n +1 logs/*.log
+        if: always()
+
 
   unit-tests-alpine:
     needs: dist-build
