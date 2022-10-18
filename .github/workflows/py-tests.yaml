@@ -121,7 +121,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: unit-tests-logs
+          name: unit-tests-logs-${{ matrix.os }}-${{ matrix.python-version }}
           path: "python/logs/*"
 
 
@@ -205,7 +205,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: generated-tests-logs
+          name: generated-tests-logs-${{ matrix.python-version }}
           path: "python/logs/*"
 
 
