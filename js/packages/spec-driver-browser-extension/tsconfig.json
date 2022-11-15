@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationDir": "types",
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+
+    "module": "commonjs",
+    "target": "es6",
+    "noImplicitAny": true,
+    "preserveConstEnums": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "stripInternal": false,
+    "removeComments": false,
+    "skipLibCheck": true
+
+  },
+  "ts-node": {
+    "transpileOnly": true
+  },
+  "exclude" : ["dist", "types", "test"]
+}
