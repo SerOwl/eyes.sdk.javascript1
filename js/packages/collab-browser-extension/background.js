@@ -1,8 +1,11 @@
 const q = []
 
 // TODO:
-// cleanup q for windows that no longer exist
 // test coverage
+
+chrome.windows.onRemoved.addListener(windowId => {
+  if (q.length && q[0].windowId === windowId) q.pop()
+})
 
 chrome.runtime.onConnect.addListener(function(port) {
   console.assert(port.name === "applitools-collab-open-sesame")
