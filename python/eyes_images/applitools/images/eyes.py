@@ -12,8 +12,10 @@ from applitools.common import (
 from applitools.common.selenium import Configuration
 from applitools.images.extract_text import OCRRegion, TextRegionSettings
 from applitools.images.fluent import Image, ImagesCheckSettings, Target
-from applitools.selenium import ClassicRunner
-from applitools.selenium.runner import log_session_results_and_raise_exception
+from applitools.selenium.runner import (
+    EyesRunner,
+    log_session_results_and_raise_exception,
+)
 from applitools.selenium.schema import (
     demarshal_locate_text_result,
     demarshal_match_result,
@@ -25,6 +27,8 @@ from applitools.selenium.schema import (
     marshal_ocr_search_settings,
 )
 
+from ..selenium.command_executor import ManagerType
+
 if TYPE_CHECKING:
     from typing import List, Optional, Text
 
@@ -34,10 +38,18 @@ if TYPE_CHECKING:
     from ..core.extract_text import PATTERN_TEXT_REGIONS
 
 
-class Eyes(object):
+class ImagesRunner(EyesRunner):
+    BASE_AGENT_ID = "eyes.images.python"
+
     def __init__(self):
+        super(ImagesRunner, self).__init__(ManagerType.CLASSIC)
+
+
+class Eyes(object):
+    def __init__(self, runner=None):
+        # type: (Optional[EyesRunner]) -> None
         self.configure = Configuration()
-        self._runner = ClassicRunner()
+        self._runner = runner if runner is not None else ImagesRunner()
         self._commands = self._runner._commands  # noqa
         self._eyes_ref = None
 
