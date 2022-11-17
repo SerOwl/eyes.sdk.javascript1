@@ -1,0 +1,44 @@
+<html>
+  <body>
+  </body>
+  <script type='text/javascript'>
+    let extensionLoaded
+    let counter = 0
+    const loop = setInterval(() => {
+      counter++
+      extensionLoaded = document.querySelector('#applitools-collab-extension-loaded')
+      if (extensionLoaded) {
+        console.log('extension loaded!')
+        const trigger = document.createElement('button')
+        trigger.append(document.createTextNode('Click me'))
+        document.body.appendChild(trigger)
+        document.querySelector('button').addEventListener('click', () => {
+          window.postMessage({
+            type: 'FROM_PAGE',
+            text: 'Hello from the webpage!',
+            size: {
+              width: 800,
+              height: 600,
+            },
+            url: 'data:text/html,<h1>Hello, World?</h1>',
+          }, '*');
+        }, false);
+        clearInterval(loop)
+      }
+      if (counter > 10) {
+        console.log('extension not loaded...')
+        if (/chrome|chromium|crios/i.test(navigator.userAgent)) {
+          console.log('chrome detected, adding install link')
+          const trigger = document.createElement('a')
+          trigger.href = 'https://chrome.google.com/webstore/category/extensions'
+          trigger.target = '_blank'
+          trigger.append(document.createTextNode('Install the extension'))
+          document.body.appendChild(trigger)
+        } else {
+          console.log('unsupported browser, nothing to do.')
+        }
+        clearInterval(loop)
+      }
+    }, 1)
+  </script>
+</html>
