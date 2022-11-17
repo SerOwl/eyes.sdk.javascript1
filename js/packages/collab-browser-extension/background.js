@@ -1,7 +1,6 @@
 const q = []
 
 // TODO:
-// persist q to local storage
 // cleanup q for windows that no longer exist
 // test coverage
 
@@ -9,14 +8,11 @@ chrome.runtime.onConnect.addListener(function(port) {
   console.assert(port.name === "applitools-collab-open-sesame")
   port.onMessage.addListener(async function(msg) {
     console.log('message received from the content script (via the collab web app)', msg)
-    const {requiredViewportSize, focusWindow} = msg
-    if (focusWindow) {
+    const {requiredViewportSize} = msg
+    if (q.length) {
       console.log('bringing open window into focus')
-      chrome.windows.update(focusWindow, {focused: true})
-      return
-    }
-    if (q.length) console.log('there is already a window in the queue, nothing to do', q)
-    if (!q.length) {
+      chrome.windows.update(q[0].windowId, {focused: true})
+    } else {
       console.log('opening window')
       const {id: windowId} = await chrome.windows.create(
         {
