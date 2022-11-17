@@ -2,6 +2,16 @@
   <body>
   </body>
   <script type='text/javascript'>
+    function openWindow() {
+      window.postMessage({
+        type: 'FROM_PAGE',
+        requiredViewportSize: {
+          width: 800,
+          height: 600,
+        },
+        newWindowUrl: 'data:text/html,<h1>Hello, World?</h1>',
+      }, '*')
+    }
     let extensionLoaded
     const loop = setInterval(() => {
       extensionLoaded = document.querySelector('#applitools-collab-extension-loaded')
@@ -10,17 +20,7 @@
         const trigger = document.createElement('button')
         trigger.append(document.createTextNode('Click me'))
         document.body.appendChild(trigger)
-        document.querySelector('button').addEventListener('click', () => {
-          window.postMessage({
-            type: 'FROM_PAGE',
-            text: 'Hello from the webpage!',
-            size: {
-              width: 800,
-              height: 600,
-            },
-            url: 'data:text/html,<h1>Hello, World?</h1>',
-          }, '*');
-        }, false);
+        document.querySelector('button').addEventListener('click', openWindow, false)
         clearInterval(loop)
       } else {
         console.log('extension not loaded...')
@@ -37,5 +37,25 @@
         clearInterval(loop)
       }
     }, 0)
+    window.addEventListener("message", (event) => {
+      // We only accept messages from ourselves
+      if (event.source != window) {
+        return
+      }
+
+      if (event.data.type && (event.data.type == "FROM_EXTENSION")) {
+        console.log('page received: ', event.data)
+        const {windowId} = event.data
+        const trigger = document.querySelector('button')
+        trigger.textContent = 'Focus window'
+        trigger.removeEventListener('click', openWindow)
+        trigger.addEventListener('click', () => {
+          window.postMessage({
+            type: 'FROM_PAGE',
+            focusWindow: windowId,
+          }, '*')
+        })
+      }
+  }, false);
   </script>
 </html>
