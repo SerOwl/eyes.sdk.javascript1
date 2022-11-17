@@ -3,9 +3,7 @@
   </body>
   <script type='text/javascript'>
     let extensionLoaded
-    let counter = 0
     const loop = setInterval(() => {
-      counter++
       extensionLoaded = document.querySelector('#applitools-collab-extension-loaded')
       if (extensionLoaded) {
         console.log('extension loaded!')
@@ -24,8 +22,7 @@
           }, '*');
         }, false);
         clearInterval(loop)
-      }
-      if (counter > 10) {
+      } else {
         console.log('extension not loaded...')
         if (/chrome|chromium|crios/i.test(navigator.userAgent)) {
           console.log('chrome detected, adding install link')
@@ -39,6 +36,6 @@
         }
         clearInterval(loop)
       }
-    }, 1)
+    }, 0)
   </script>
 </html>
