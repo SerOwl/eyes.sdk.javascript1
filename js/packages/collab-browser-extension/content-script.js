@@ -1,4 +1,4 @@
-function log(msg, ...rest) {
+function log(...messages) {
   console.log('[content script]', ...messages)
 }
 
