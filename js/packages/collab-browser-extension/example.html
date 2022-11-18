@@ -2,15 +2,16 @@
   <body>
   </body>
   <script type='text/javascript'>
-    function openWindow() {
+    function startBeacon(event) {
       window.postMessage({
         type: 'FROM_PAGE',
         requiredViewportSize: {
           width: 800,
           height: 600,
         },
-        newWindowUrl: 'data:text/html,<h1>Hello, World?</h1>',
+        designId: '12345',
       }, '*')
+      event.target.disabled = true
     }
     let extensionLoaded
     const loop = setInterval(() => {
@@ -20,7 +21,7 @@
         const trigger = document.createElement('button')
         trigger.append(document.createTextNode('Click me'))
         document.body.appendChild(trigger)
-        document.querySelector('button').addEventListener('click', openWindow, false)
+        document.querySelector('button').addEventListener('click', startBeacon, false)
         clearInterval(loop)
       } else {
         console.log('extension not loaded...')
@@ -37,5 +38,21 @@
         clearInterval(loop)
       }
     }, 0)
+    window.addEventListener('message', (event) => {
+      // We only accept messages from ourselves
+      if (event.source != window) {
+        return
+      }
+
+      if (event.data.type && (event.data.type == 'FROM_EXTENSION')) {
+        console.log('received data from the extension', event.data)
+        if (event.data.screenshot) {
+          document.querySelector('button').disabled = false
+          const payload = document.createElement('div')
+          payload.append(document.createTextNode(event.data.screenshot))
+          document.body.appendChild(payload)
+        }
+      }
+    }, false)
   </script>
 </html>
