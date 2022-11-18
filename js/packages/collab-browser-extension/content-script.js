@@ -15,7 +15,7 @@ window.addEventListener('message', (event) => {
 
   if (event.data.type && (event.data.type == 'FROM_PAGE')) {
     log('event data', event.data)
-    chrome.runtime.sendMessage({startBeacon: true, ...event.data})
+    chrome.runtime.sendMessage(event.data)
   }
 }, false)
 

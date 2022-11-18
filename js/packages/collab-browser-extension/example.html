@@ -5,6 +5,7 @@
     function startBeacon(event) {
       window.postMessage({
         type: 'FROM_PAGE',
+        startBeacon: true,
         requiredViewportSize: {
           width: 800,
           height: 600,

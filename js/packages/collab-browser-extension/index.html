@@ -1,16 +1,24 @@
 <html>
   <body>
-    <div id="beacon-started" style='display: none'>
-      <button>Take screenshot</button>
-    </div>
     <div id="beacon-not-started">
       <p>You need to start the beacon from the collab tool</p>
+    </div>
+    <div id="beacon-started">
+      <button>Take screenshot</button>
+    </div>
+    <div id="screenshot-complete">
+      <p>Screenshot complete! Head back over to the collab app to see it.</p>
+      <a href=#>link</a>
     </div>
   </body>
   <script src="index.js"></script>
   <style>
     body {
       width: 300px;
+      height: 100px;
+    }
+    #beacon-not-started, #beacon-started, #screenshot-complete {
+      display: none;
     }
   </style>
 </html>
