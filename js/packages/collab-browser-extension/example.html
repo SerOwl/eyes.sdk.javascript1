@@ -21,7 +21,7 @@
         const trigger = document.createElement('button')
         trigger.append(document.createTextNode('Click me'))
         document.body.appendChild(trigger)
-        document.querySelector('button').addEventListener('click', startBeacon, false)
+        document.querySelector('button').addEventListener('click', startBeacon)
         clearInterval(loop)
       } else {
         console.log('extension not loaded...')

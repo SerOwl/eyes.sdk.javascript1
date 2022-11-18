@@ -1,4 +1,6 @@
-var port = chrome.runtime.connect({name: 'applitools-collab-open-sesame'})
+function log(msg, ...rest) {
+  console.log('[content script]', ...messages)
+}
 
 const flag = document.createElement('div')
 flag.style.display = 'none'
@@ -12,14 +14,13 @@ window.addEventListener('message', (event) => {
   }
 
   if (event.data.type && (event.data.type == 'FROM_PAGE')) {
-    console.log('Content script received: ' + event.data.text)
-    console.log('event data', event.data)
-    port.postMessage(event.data)
+    log('event data', event.data)
+    chrome.runtime.sendMessage({startBeacon: true, ...event.data})
   }
 }, false)
 
-port.onMessage.addListener(function(msg) {
-  console.log('msg received from background script', msg)
+chrome.runtime.onMessage.addListener(function(msg) {
+  log('msg received from background script', msg)
   window.postMessage({
     type: 'FROM_EXTENSION',
     ...msg
