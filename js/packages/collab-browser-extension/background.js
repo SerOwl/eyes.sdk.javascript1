@@ -27,16 +27,25 @@ chrome.runtime.onMessage.addListener(async function(request, _sender, sendRespon
 
     if (request.takeScreenshot) {
       log('taking screenshot')
-      // TODO start
-      // grab details from from q
-      // resize window to required viewport size
-      // capture screenshot
-      await new Promise(res => setTimeout(res, 2000)) // to simulate screenshot capture
-      // TODO end
-      log('screenshot taken!')
+      // TODO
+      // - grab details from from q
+      // - resize window to required viewport size
+      // - capture screenshot
+      const targetWindow = await chrome.tabs.query({active: true, currentWindow: true})
+      const target = {tabId: targetWindow[0].id}
+      await chrome.debugger.attach(target, '1.3')
+      const screenshot = await chrome.debugger.sendCommand(target, 'Page.captureScreenshot')
+      await chrome.debugger.detach(target)
+      log('screenshot taken!', screenshot)
       log('sending result and cleaning up')
       // message for the collab app
-      chrome.tabs.sendMessage(q[0].caller.tabId, {...q[0], type: 'FROM_EXTENSION', screenshot: 'pretend this is a screenshot'})
+      chrome.tabs.sendMessage(q[0].caller.tabId,
+        {
+          ...q[0],
+          type: 'FROM_EXTENSION',
+          screenshot: screenshot ? screenshot.data : 'pretend this is a screenshot'
+        }
+      )
       // message for the extension popup
       chrome.runtime.sendMessage({screenshotComplete: true, caller: q[0].caller})
       // TODO restore winow size to what it was before resize

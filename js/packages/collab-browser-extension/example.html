@@ -49,8 +49,8 @@
         console.log('received data from the extension', event.data)
         if (event.data.screenshot) {
           document.querySelector('button').disabled = false
-          const payload = document.createElement('div')
-          payload.append(document.createTextNode(event.data.screenshot))
+          const payload = document.createElement('img')
+          payload.src = `data:image/png;base64, ${event.data.screenshot}`
           document.body.appendChild(payload)
         }
       }
