@@ -14,6 +14,8 @@ async function retrieve(key) {
 }
 
 // TODO:
+// change extension popup text if run on the collab app page?
+// - e.g., navigate to a page in a different tab/window in order to take a screenshot
 // beacon timeout (length TBD)
 // local storage needed?
 // - e.g., https://developer.chrome.com/docs/extensions/mv3/migrating_to_service_workers/#state
