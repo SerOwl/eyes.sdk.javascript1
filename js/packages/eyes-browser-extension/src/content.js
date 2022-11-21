@@ -1,11 +1,13 @@
 import browser from 'webextension-polyfill'
-import {makeRefer} from './refer'
+import {makeRefer} from '@applitools/spec-driver-browser-extension'
 import {makeMessenger} from './messenger'
 import {makeUnmark} from './marker'
 
 const apiScript = document.createElement('script')
 apiScript.src = browser.runtime.getURL('api.js')
 window.document.body.appendChild(apiScript)
+
+console.log('HERE!', makeRefer)
 
 window.refer = makeRefer({
   check: element => element instanceof Node,
