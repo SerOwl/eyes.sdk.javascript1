@@ -1,3 +1,4 @@
+import {spec} from '@applitools/spec-driver-browser-extension'
 const q = []
 
 function log(...messages) {

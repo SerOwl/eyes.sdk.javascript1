@@ -1,6 +1,17 @@
+import {makeRefer} from '@applitools/spec-driver-browser-extension'
+
 function log(...messages) {
   console.log('[content script]', ...messages)
 }
+
+window.refer = makeRefer({
+  check: element => element instanceof Node,
+  validate: element => {
+    if (!element || !element.isConnected) {
+      throw new Error('StaleElementReferenceError')
+    }
+  },
+})
 
 const flag = document.createElement('div')
 flag.style.display = 'none'

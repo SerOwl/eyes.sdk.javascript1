@@ -7,8 +7,6 @@ const apiScript = document.createElement('script')
 apiScript.src = browser.runtime.getURL('api.js')
 window.document.body.appendChild(apiScript)
 
-console.log('HERE!', makeRefer)
-
 window.refer = makeRefer({
   check: element => element instanceof Node,
   validate: element => {
