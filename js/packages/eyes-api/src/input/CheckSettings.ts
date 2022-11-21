@@ -337,27 +337,6 @@ export class CheckSettingsBaseFluent<TRegion = never> {
 }
 
 export class CheckSettingsImageFluent extends CheckSettingsBaseFluent {
-  /** @internal */
-  static image(image: Buffer | URL | string): CheckSettingsImageFluent {
-    return new this().image(image)
-  }
-  /** @internal */
-  static buffer(imageBuffer: Buffer): CheckSettingsImageFluent {
-    return new this().image(imageBuffer)
-  }
-  /** @internal */
-  static base64(imageBase64: string): CheckSettingsImageFluent {
-    return new this().image(imageBase64)
-  }
-  /** @internal */
-  static path(imagePath: string): CheckSettingsImageFluent {
-    return new this().image(imagePath)
-  }
-  /** @internal */
-  static url(imageUrl: URL | string): CheckSettingsImageFluent {
-    return new this().image(imageUrl)
-  }
-
   protected _settings: CheckSettingsImage
   protected _target: Image
 
@@ -434,27 +413,6 @@ type CheckSettingsAutomationSpec<TElement = unknown, TSelector = unknown> = {
 export class CheckSettingsAutomationFluent<TElement = unknown, TSelector = unknown> extends CheckSettingsBaseFluent<
   RegionReference<TElement, TSelector>
 > {
-  /** @internal */
-  static window(): CheckSettingsAutomationFluent {
-    return new this()
-  }
-  /** @internal */
-  static region(region: unknown): CheckSettingsAutomationFluent {
-    return new this().region(region)
-  }
-  /** @internal */
-  static frame(contextOrFrame: unknown, scrollRootElement?: unknown): CheckSettingsAutomationFluent {
-    return new this().frame(contextOrFrame, scrollRootElement)
-  }
-  /** @internal */
-  static shadow(selector: unknown): CheckSettingsAutomationFluent {
-    return new this().shadow(selector)
-  }
-  /** @internal */
-  static webview(webview: string | boolean | null): CheckSettingsAutomationFluent {
-    return new this().webview(webview)
-  }
-
   protected _settings: CheckSettingsAutomation<TElement, TSelector>
 
   protected static readonly _spec: CheckSettingsAutomationSpec<any, any>
@@ -643,7 +601,19 @@ export class CheckSettingsAutomationFluent<TElement = unknown, TSelector = unkno
         layoutRegions: this._settings.layoutRegions,
         strictRegions: this._settings.strictRegions,
         contentRegions: this._settings.contentRegions,
-        floatingRegions: this._settings.floatingRegions,
+        floatingRegions:
+          this._settings.floatingRegions &&
+          this._settings.floatingRegions.map(floatingRegion => {
+            if (utils.types.has(floatingRegion, 'region')) {
+              const {maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset, ...rest} =
+                floatingRegion as LegacyCodedFloatingRegion
+              return {
+                offset: {top: maxUpOffset, bottom: maxDownOffset, left: maxLeftOffset, right: maxRightOffset},
+                ...rest,
+              }
+            }
+            return floatingRegion
+          }),
         accessibilityRegions: this._settings.accessibilityRegions,
         disableBrowserFetching: this._settings.disableBrowserFetching,
         layoutBreakpoints: this._settings.layoutBreakpoints,
@@ -682,3 +652,38 @@ export type TargetAutomation<TElement, TSelector> = {
 }
 
 export type Target<TElement, TSelector> = TargetImage & TargetAutomation<TElement, TSelector>
+
+export const Target: Target<unknown, unknown> & {spec?: CheckSettingsAutomationSpec} = {
+  spec: null as CheckSettingsAutomationSpec,
+
+  image(image: Buffer | URL | string): CheckSettingsImageFluent {
+    return new CheckSettingsImageFluent().image(image)
+  },
+  buffer(imageBuffer: Buffer): CheckSettingsImageFluent {
+    return new CheckSettingsImageFluent().image(imageBuffer)
+  },
+  base64(imageBase64: string): CheckSettingsImageFluent {
+    return new CheckSettingsImageFluent().image(imageBase64)
+  },
+  path(imagePath: string): CheckSettingsImageFluent {
+    return new CheckSettingsImageFluent().image(imagePath)
+  },
+  url(imageUrl: URL | string): CheckSettingsImageFluent {
+    return new CheckSettingsImageFluent().image(imageUrl)
+  },
+  window(): CheckSettingsAutomationFluent {
+    return new CheckSettingsAutomationFluent({}, this.spec)
+  },
+  region(region: unknown): CheckSettingsAutomationFluent {
+    return new CheckSettingsAutomationFluent({}, this.spec).region(region)
+  },
+  frame(contextOrFrame: unknown, scrollRootElement?: unknown): CheckSettingsAutomationFluent {
+    return new CheckSettingsAutomationFluent({}, this.spec).frame(contextOrFrame, scrollRootElement)
+  },
+  shadow(selector: unknown): CheckSettingsAutomationFluent {
+    return new CheckSettingsAutomationFluent({}, this.spec).shadow(selector)
+  },
+  webview(webview: string | boolean | null): CheckSettingsAutomationFluent {
+    return new CheckSettingsAutomationFluent({}, this.spec).webview(webview)
+  },
+}

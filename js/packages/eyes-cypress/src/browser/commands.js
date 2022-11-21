@@ -58,7 +58,7 @@ Cypress.Commands.add('eyesGetAllTestResults', () => {
   });
 });
 
-if (shouldUseBrowserHooks) {
+if (shouldUseBrowserHooks || Cypress.config('eyesFailCypressOnDiff')) {
   after(() => {
     if (!manager) return;
     return cy.then({timeout: 86400000}, async () => {
@@ -72,6 +72,7 @@ if (shouldUseBrowserHooks) {
         isTextTerminal: Cypress.config('isTextTerminal'),
         tapDirPath: Cypress.config('appliConfFile').tapDirPath,
         tapFileName: Cypress.config('appliConfFile').tapFileName,
+        shouldCreateTapFile: shouldUseBrowserHooks,
       };
       await Promise.all(closePromiseArr);
       const summary = await socket.request('EyesManager.closeManager', {manager, throwErr});

@@ -10,6 +10,23 @@
 
 
 
+
+## 3.27.8 - 2022/11/19
+
+### Features
+### Bug fixes
+- Handle cases where cypress report showed tests pass when differences were found
+
+## 3.27.7 - 2022/11/17
+
+### Features
+- Added new selector extensions `child` and `fallback`
+- Use user agent metadata to improve browser environment detection logic
+- Use APPLITOOLS_CONCURRENCY env variable to specify concurrency
+### Bug fixes
+- Support parallel run of multiple `Cypress` instances
+- Add support for regionId and padding for accessibility and floating regions
+
 ## 3.27.6 - 2022/10/28
 
 ### Features

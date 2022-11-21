@@ -46,18 +46,18 @@ function makeStartServer({logger}) {
     }
 
     const {port: universalPort, close: closeUniversalServer} = await makeServerProcess({
-      key: path.resolve(__dirname, '../pem/server.key'),
-      cert: path.resolve(__dirname, '../pem/server.cert'),
       idleTimeout: 0,
       shutdownMode: 'stdin',
       forkOptions,
+      singleton: false,
+      portResolutionMode: 'random',
     });
 
     const managers = [];
     let socketWithUniversal;
 
     wss.on('connection', socketWithClient => {
-      socketWithUniversal = connectSocket(`wss://localhost:${universalPort}/eyes`);
+      socketWithUniversal = connectSocket(`ws://localhost:${universalPort}/eyes`);
 
       socketWithUniversal.setPassthroughListener(message => {
         logger.log('<== ', message.toString().slice(0, 1000));
@@ -84,7 +84,10 @@ function makeStartServer({logger}) {
           socketWithUniversal.send(newMessage);
         } else if (msg.name === 'Test.printTestResults') {
           try {
-            if (msg.payload.resultConfig.tapDirPath) {
+            if (
+              msg.payload.resultConfig.tapDirPath &&
+              msg.payload.resultConfig.shouldCreateTapFile
+            ) {
               handleTestResults.handleBatchResultsFile(msg.payload.testResults, {
                 tapFileName: msg.payload.resultConfig.tapFileName,
                 tapDirPath: msg.payload.resultConfig.tapDirPath,
