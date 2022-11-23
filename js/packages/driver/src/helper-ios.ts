@@ -36,7 +36,12 @@ export class HelperIOS<TDriver, TContext, TElement, TSelector> {
   }
 
   async getContentRegion(element: Element<TDriver, TContext, TElement, TSelector>): Promise<Region> {
-    await this._element.click()
+    const {x, y} = await this._spec.getElementRegion(this._driver.target, this._element.target)
+    await this._spec.performAction(this._driver.target, [
+      {action: 'press', x, y},
+      {action: 'wait', ms: 300},
+      {action: 'release'},
+    ])
 
     const region = await this._spec.getElementRegion(this._driver.target, element.target)
 
