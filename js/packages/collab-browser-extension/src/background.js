@@ -5,7 +5,7 @@ import {makeLogger} from '@applitools/logger'
 const q = []
 
 function log(...messages) {
-  console.log('[background script]', ...messages)
+  console.log(...messages)
 }
 
 //async function store(key, value) {
@@ -27,49 +27,76 @@ function log(...messages) {
 // this instead of how we're passing messages currently?
 // - https://developer.chrome.com/docs/extensions/mv3/messaging/#external-webpage
 
+async function captureScreenshot(driver, screenshotOptions) {
+  log('capturing screenshot with', screenshotOptions)
+  const {image} = await takeScreenshot({driver, ...screenshotOptions})
+  const screenshot = image && await image.toPng()
+  log('screenshot taken!', screenshot)
+  return Buffer.from(screenshot).toString('base64')
+}
+
+async function makeWindowTargets() {
+  const [focusedWindow] = await chrome.tabs.query({active: true, currentWindow: true})
+  log('making window targets from', focusedWindow)
+  const targets = {
+    driver: {
+      tabId: focusedWindow.id,
+      windowId: focusedWindow.windowId,
+    },
+    debugger: {
+      tabId: focusedWindow.id
+    },
+    origin: focusedWindow,
+  }
+  return targets
+}
+
 chrome.runtime.onMessage.addListener(async function(request, _sender, sendResponse) {
   log('message received from the content script (via the collab web app)', request)
 
   if (request.takeScreenshot) {
-    log('taking screenshot')
-    // TODO
-    // - grab details from from q
-    // - resize window to required viewport size
-    // - BONUS POINTS: resize w/ cdp, re: https://chromedevtools.github.io/devtools-protocol/1-3/Emulation/#method-setDeviceMetricsOverride
-    const targetWindow = await chrome.tabs.query({active: true, currentWindow: true})
-    const page = {tabId: targetWindow[0].id, windowId: targetWindow.windowId}
-    const driver = await new Driver({driver: page, spec, logger: makeLogger(), customConfig: {}}).init()
-    const options = {
-      fully: true,
-      scrollingMode: 'scroll',
-    }
-    const {image} = await takeScreenshot({driver, ...options})
-    //const imageBuffer = image && await image.toBuffer()
-    const screenshot = image && await image.toPng()
-    //await chrome.debugger.attach(target, '1.3')
-    //const screenshot = await chrome.debugger.sendCommand(target, 'Page.captureScreenshot')
-    //await chrome.debugger.detach(target)
+    // init
+    const targets = await makeWindowTargets()
+    const driver = await new Driver({
+      driver: targets.driver,
+      spec,
+      logger: makeLogger(),
+      customConfig: {}
+    }).init()
+    const job = q[0]
 
-    log('screenshot taken!', screenshot)
-    log('sending result and cleaning up')
-    // message for the collab app
-    chrome.tabs.sendMessage(q[0].caller.tabId,
+    // resize
+    await driver.setViewportSize(job.requiredViewportSize)
+    const screenshot = await captureScreenshot(
+      driver,
       {
-        ...q[0],
-        type: 'FROM_EXTENSION',
-        screenshot: Buffer.from(screenshot).toString('base64'),
+        fully: job.screenshot && job.screenshot.fullpage,
+        scrollingMode: 'scroll',
       }
     )
-    // message for the extension popup
-    chrome.runtime.sendMessage({screenshotComplete: true, caller: q[0].caller})
-    // TODO restore winow size to what it was before resize
+
+    // cleanup
+    log('restoring viewport size to its original state')
+    await driver.setViewportSize({width: targets.origin.width, height: targets.origin.height})
+    log('relaunching the extension popup')
+    await chrome.action.openPopup()
+    log('sending message to the collab app')
+    chrome.tabs.sendMessage(job.caller.tabId,
+      {
+        ...job,
+        type: 'FROM_EXTENSION',
+        screenshot,
+      }
+    )
+    log('sending message to the extension popup')
+    chrome.runtime.sendMessage({screenshotComplete: true, caller: job.caller})
+    log('emptying the queue')
     q.pop()
     log('done!')
     sendResponse(true)
   } else if (request.startBeacon) {
     const currentTab = await chrome.tabs.query({active: true, currentWindow: true})
     const caller = {tabId: currentTab[0].id, windowId: currentTab[0].windowId}
-    console.log('caller', caller)
     // store window and tab id along with the request
     // but, Highlander rules, there can be only 1!
     q.splice(0, q.length, {caller, ...request})
