@@ -13,7 +13,8 @@
     "scripting",
     "tabs",
     "storage",
-    "debugger"
+    "debugger",
+    "clipboardWrite"
   ],
   "background": {
     "service_worker": "background.js"
