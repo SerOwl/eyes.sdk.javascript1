@@ -81,13 +81,13 @@ chrome.action.onClicked.addListener(async () => {
     chrome.tabs.sendMessage(targets.activeTab,
       {screenshot}
     )
-  } finally {
-    console.log('clearing queue')
-    q.pop()
     console.log('notifying the user of completion')
     await chrome.action.setIcon({path: 'assets/done.png'})
     await chrome.action.setTitle({title: 'screenshot saved to system clipboard'})
     await new Promise(res => setTimeout(res, 5000))
+  } finally {
+    console.log('clearing queue')
+    q.pop()
     await chrome.action.setIcon({path: 'assets/icon.png'})
     await chrome.action.setTitle({title})
     await new Promise(res => setTimeout(res, 1000))
