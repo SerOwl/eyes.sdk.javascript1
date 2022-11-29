@@ -2,23 +2,29 @@ import {spec} from '@applitools/spec-driver-browser-extension'
 import {Driver} from '@applitools/driver'
 import {takeScreenshot} from '@applitools/screenshoter'
 import {makeLogger} from '@applitools/logger'
-let isFullPage = true
 const q = []
 
 chrome.contextMenus.onClicked.addListener((info, _tab) => {
   const {menuItemId: selectedItem} = info
-  if (selectedItem === 'capture-viewport') isFullPage = false
-  else if (selectedItem === 'capture-fullpage') isFullPage = true
+  const captureMode = {isFullPage: true}
+  if (selectedItem === 'capture-viewport') captureMode.isFullPage = false
+  else if (selectedItem === 'capture-fullpage') captureMode.isFullPage = true
+  chrome.storage.local.set(captureMode)
+  console.log('updated capture mode', captureMode)
 })
 
-chrome.contextMenus.removeAll(() => {
-  try {
-    const parent = chrome.contextMenus.create({id: 'screenshoter', title: 'screenshoter'})
-    chrome.contextMenus.create({id: 'capture-fullpage', parentId: parent, type: 'radio', title: 'capture full page', checked: !!isFullPage})
-    chrome.contextMenus.create({id: 'capture-viewport', parentId: parent, type: 'radio', title: 'capture viewport', checked: !isFullPage})
-  } catch(error) {
-    console.error(error)
-  }
+chrome.storage.local.get(['isFullPage'], ({isFullPage}) => {
+  isFullPage = isFullPage ? isFullPage : true
+  console.log('creating context menus', {isFullPage})
+  chrome.contextMenus.removeAll(() => {
+    try {
+      const parent = chrome.contextMenus.create({id: 'screenshoter', title: 'screenshoter'})
+      chrome.contextMenus.create({id: 'capture-fullpage', parentId: parent, type: 'radio', title: 'capture full page', checked: !!isFullPage})
+      chrome.contextMenus.create({id: 'capture-viewport', parentId: parent, type: 'radio', title: 'capture viewport', checked: !isFullPage})
+    } catch(error) {
+      console.error(error)
+    }
+  })
 })
 
 async function captureScreenshot(driver, screenshotOptions) {
@@ -52,8 +58,9 @@ chrome.action.onClicked.addListener(async () => {
     return
   }
   const title = await chrome.action.getTitle({})
+  const {isFullPage} = await chrome.storage.local.get(['isFullPage'])
   try {
-    console.log('queue is empty, taking screenshot')
+    console.log(`queue is empty, taking ${isFullPage ? 'fullpage' : 'viewport'} screenshot`)
     chrome.action.setIcon({path: 'assets/in-progress.png'})
     chrome.action.setTitle({title: `taking ${isFullPage ? 'full page' : 'viewport'} screenshot...`})
     // init
