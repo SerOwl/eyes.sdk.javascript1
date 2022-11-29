@@ -1,10 +1,10 @@
 {
-  "name": "@applitools/collab-browser-extension",
+  "name": "@applitools/screenshot-browser-extension",
   "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/applitools/eyes.sdk.javascript1.git",
-    "directory": "js/packages/collab-browser-extension"
+    "directory": "js/packages/screenshot-browser-extension"
   },
   "license": "ISC",
   "author": {
@@ -19,14 +19,14 @@
     "lint": "eslint '**/*.js'",
     "build": "yarn build:dist && yarn build:zip",
     "build:dist": "webpack",
-    "build:zip": "cd dist; zip -r collab-browser-extension.zip *; mv collab-browser-extension.zip ../",
-    "generate:tests": "coverage-tests generate ./test/coverage/config.js --name 'collab-browser-extension'",
+    "build:zip": "cd dist; zip -r screenshot-browser-extension.zip *; mv screenshot-browser-extension.zip ../",
+    "generate:tests": "coverage-tests generate ./test/coverage/config.js --name 'screenshot-browser-extension'",
     "test:xvfb": "xvfb-run --auto-servernum -- yarn test",
     "test": "yarn test:it && yarn test:coverage",
     "test:sanity": "yarn test:it",
     "test:it": "mocha --no-timeouts --exit ./test/it/*.spec.js",
-    "test:coverage": "yarn generate:tests && APPLITOOLS_BATCH_NAME='JS Coverage Tests: collab-browser-extension' APPLITOOLS_BATCH_ID=$(uuidgen) XUNIT_FILE=coverage-test-report.xml mocha --config .mocharc.cvg.js",
-    "report": "coverage-tests report https://raw.githubusercontent.com/applitools/sdk.coverage.tests/universal-sdk/js/config.js --name 'collab-browser-extension'",
+    "test:coverage": "yarn generate:tests && APPLITOOLS_BATCH_NAME='JS Coverage Tests: screenshot-browser-extension' APPLITOOLS_BATCH_ID=$(uuidgen) XUNIT_FILE=coverage-test-report.xml mocha --config .mocharc.cvg.js",
+    "report": "coverage-tests report https://raw.githubusercontent.com/applitools/sdk.coverage.tests/universal-sdk/js/config.js --name 'screenshot-browser-extension'",
     "deps": "bongo deps",
     "gh:test": "gh workflow run test.yml --ref $(git rev-parse --abbrev-ref HEAD) -f packages='browser-extension' -f links='eyes-sdk-core eyes-api types utils driver screenshoter visual-grid-client'",
     "gh:publish": "gh workflow run publish-browser-extension.yml --ref $(git rev-parse --abbrev-ref HEAD)",
