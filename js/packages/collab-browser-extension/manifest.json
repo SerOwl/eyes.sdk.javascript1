@@ -5,7 +5,6 @@
   "version": "__PACKAGE_VERSION__",
   "version_name": "__PACKAGE_VERSION__",
   "action": {
-    "default_popup": "popup.html",
     "default_icon": "assets/icon.png"
   },
   "permissions": [
@@ -14,7 +13,9 @@
     "tabs",
     "storage",
     "debugger",
-    "clipboardWrite"
+    "clipboardWrite",
+    "contextMenus",
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"

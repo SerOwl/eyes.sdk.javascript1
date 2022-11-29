@@ -2,6 +2,17 @@ import {spec} from '@applitools/spec-driver-browser-extension'
 import {Driver} from '@applitools/driver'
 import {takeScreenshot} from '@applitools/screenshoter'
 import {makeLogger} from '@applitools/logger'
+let isFullPage = true
+
+chrome.contextMenus.onClicked.addListener((info, _tab) => {
+  const {menuItemId: selectedItem} = info
+  if (selectedItem === 'capture-viewport') isFullPage = false
+  else if (selectedItem === 'capture-viewport') isFullPage = true
+})
+
+const parent = chrome.contextMenus.create({id: 'screenshoter', title: 'screenshoter'})
+chrome.contextMenus.create({id: 'capture-fullpage', parentId: parent, type: 'radio', title: 'capture full page', checked: !!isFullPage})
+chrome.contextMenus.create({id: 'capture-viewport', parentId: parent, type: 'radio', title: 'capture viewport', checked: !isFullPage})
 
 async function captureScreenshot(driver, screenshotOptions) {
   console.log('capturing screenshot with', screenshotOptions)
@@ -33,39 +44,38 @@ async function resizeViewport(targetSize) {
   // await driver.setViewportSize(targetSize)
 }
 
-chrome.runtime.onMessage.addListener(async function(request, _sender, sendResponse) {
-  console.log('message received from the content script (via the collab web app)', request)
+chrome.action.onClicked.addListener(async () => {
+  // init
+  const targets = await makeWindowTargets()
+  const driver = await new Driver({
+    driver: targets.driver,
+    spec,
+    logger: makeLogger(),
+    customConfig: {}
+  }).init()
 
-  if (request.takeScreenshot) {
-    // init
-    const targets = await makeWindowTargets()
-    const driver = await new Driver({
-      driver: targets.driver,
-      spec,
-      logger: makeLogger(),
-      customConfig: {}
-    }).init()
+  // do the thing
+  const screenshot = await captureScreenshot(
+    driver,
+    {
+      fully: !!isFullPage,
+      scrollingMode: 'css',
+    }
+  )
 
-    // do the thing
-    const screenshot = await captureScreenshot(
-      driver,
-      {
-        fully: true,
-        scrollingMode: 'css',
-      }
-    )
-
-    // cleanup
-    // message to the extension popup (if it's still open)
-    chrome.runtime.sendMessage({screenshotComplete: true})
-    // there seems to be a race condition where the popup window doesn't close in time, which causes writing to the system clipboard to error
-    await new Promise(res => setTimeout(res, 100))
-    // message to the background script
-    chrome.tabs.sendMessage(targets.activeTab,
-      {screenshot}
-    )
-    console.log('done!')
-    sendResponse(true)
-  }
-  return true
+  // cleanup
+  console.log('sending screenshot to the content script to store in the system clipboard')
+  chrome.tabs.sendMessage(targets.activeTab,
+    {screenshot}
+  )
+  console.log('notifying the user of completion')
+  chrome.notifications.create(
+    {
+      type: 'basic',
+      title: 'screeenshot captured',
+      message: `a ${isFullPage ? 'full page' : 'visible viewport'} image has been captured and stored in your system clipboard`,
+      iconUrl: 'assets/icon.png',
+    }
+  )
+  console.log('done!')
 })
