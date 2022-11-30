@@ -79,11 +79,15 @@ function sendNotification({title, message}) {
 }
 
 function clearNotifications() {
-  chrome.notifications.getAll(notifications => {
-    Object.keys(notifications).forEach(notification => {
-      log('clearing notification', notification)
-      chrome.notifications.clear(notification) })
-  })
+  try {
+    chrome.notifications.getAll(notifications => {
+      Object.keys(notifications).forEach(notification => {
+        log('clearing notification', notification)
+        chrome.notifications.clear(notification) })
+    })
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 chrome.action.onClicked.addListener(async () => {
