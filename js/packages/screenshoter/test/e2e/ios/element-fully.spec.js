@@ -15,10 +15,11 @@ describe('screenshoter ios app', () => {
     const button = await driver.element({type: 'accessibility id', selector: 'Scroll view with nested table'})
     await button.click()
     await sleep(3000)
-    const region = {type: 'xpath', selector: '//XCUIElementTypeTable[1]'}
-    await driver.mainContext.setScrollingElement(region)
 
     await driver.init()
+
+    const region = {type: 'xpath', selector: '//XCUIElementTypeTable[1]'}
+    await driver.mainContext.setScrollingElement(region)
 
     await test({
       type: 'ios',
