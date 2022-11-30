@@ -14,7 +14,8 @@
     "tabs",
     "storage",
     "clipboardWrite",
-    "contextMenus"
+    "contextMenus",
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"

@@ -1,5 +1,9 @@
 import {makeRefer} from '@applitools/spec-driver-browser-extension'
 
+function log(...messages) {
+  console.log('[screenshoter-ext]', ...messages)
+}
+
 window.refer = makeRefer({
   check: element => element instanceof Node,
   validate: element => {
@@ -10,13 +14,13 @@ window.refer = makeRefer({
 })
 
 chrome.runtime.onMessage.addListener(async function(msg) {
-  console.log('msg received from background script', msg)
+  log('msg received from background script', msg)
   if (msg.screenshot) {
     try {
       const fetchResult = await fetch(`data:image/png;base64,${msg.screenshot}`)
       const imageBlob = await fetchResult.blob()
-      console.log('image blob created', imageBlob)
-      console.log('writing to system clipboard')
+      log('image blob created', imageBlob)
+      log('writing to system clipboard')
       await navigator.clipboard.write([
         new ClipboardItem({
           'image/png': imageBlob
@@ -25,6 +29,6 @@ chrome.runtime.onMessage.addListener(async function(msg) {
     } catch(error) {
       console.error(error)
     }
-    console.log('done!')
+    log('done!')
   }
 })

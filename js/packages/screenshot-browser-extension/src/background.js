@@ -4,18 +4,29 @@ import {takeScreenshot} from '@applitools/screenshoter'
 import {makeLogger} from '@applitools/logger'
 const q = []
 
+function log(...messages) {
+  console.log('[screenshoter-ext]', ...messages)
+}
+
 chrome.contextMenus.onClicked.addListener((info, _tab) => {
   const {menuItemId: selectedItem} = info
   const captureMode = {isFullPage: true}
-  if (selectedItem === 'capture-viewport') captureMode.isFullPage = false
-  else if (selectedItem === 'capture-fullpage') captureMode.isFullPage = true
+  if (selectedItem === 'capture-viewport') {
+    captureMode.isFullPage = false
+    chrome.contextMenus.update('capture-viewport', {checked: true})
+    chrome.contextMenus.update('capture-fullpage', {checked: false})
+  } else if (selectedItem === 'capture-fullpage') {
+    captureMode.isFullPage = true
+    chrome.contextMenus.update('capture-viewport', {checked: false})
+    chrome.contextMenus.update('capture-fullpage', {checked: true})
+  }
   chrome.storage.local.set(captureMode)
-  console.log('updated capture mode', captureMode)
+  log('updated capture mode', captureMode)
 })
 
 chrome.storage.local.get(['isFullPage'], ({isFullPage}) => {
   isFullPage = isFullPage ? isFullPage : true
-  console.log('creating context menus', {isFullPage})
+  log('creating context menus', {isFullPage})
   chrome.contextMenus.removeAll(() => {
     try {
       const parent = chrome.contextMenus.create({id: 'screenshoter', title: 'screenshoter'})
@@ -28,16 +39,16 @@ chrome.storage.local.get(['isFullPage'], ({isFullPage}) => {
 })
 
 async function captureScreenshot(driver, screenshotOptions) {
-  console.log('capturing screenshot with', screenshotOptions)
+  log('capturing screenshot with', screenshotOptions)
   const {image} = await takeScreenshot({driver, ...screenshotOptions})
   const screenshot = image && await image.toPng()
-  console.log('screenshot taken!', screenshot)
+  log('screenshot taken!', screenshot)
   return Buffer.from(screenshot).toString('base64')
 }
 
 async function makeWindowTargets() {
   const [focusedWindow] = await chrome.tabs.query({active: true, currentWindow: true})
-  console.log('making window targets from', focusedWindow)
+  log('making window targets from', focusedWindow)
   const targets = {
     driver: {
       tabId: focusedWindow.id,
@@ -51,22 +62,55 @@ async function makeWindowTargets() {
   return targets
 }
 
+function sendNotification({title, message}) {
+  try {
+    chrome.notifications.create(
+      {
+        type: 'basic',
+        title,
+        message,
+        iconUrl: 'assets/icon.png',
+        requireInteraction: true,
+      },
+    )
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+function clearNotifications() {
+  chrome.notifications.getAll(notifications => {
+    Object.keys(notifications).forEach(notification => {
+      log('clearing notification', notification)
+      chrome.notifications.clear(notification) })
+  })
+}
+
 chrome.action.onClicked.addListener(async () => {
-  console.log('extension icon clicked')
+  log('extension icon clicked')
   if (q.length) {
-    console.log('queue is not empty, ignoring user request')
+    log('screenshot in progress, notifying user and doing nothing')
+    sendNotification({
+      title: 'Screeenshot capture in progress',
+      message: 'Please do not interact with browser window while image capture is in progress',
+    })
     return
   }
+  // pre-init (for scope)
   const title = await chrome.action.getTitle({})
   const {isFullPage} = await chrome.storage.local.get(['isFullPage'])
+  const targets = await makeWindowTargets()
   try {
-    console.log(`queue is empty, taking ${isFullPage ? 'fullpage' : 'viewport'} screenshot`)
-    chrome.action.setIcon({path: 'assets/in-progress.png'})
-    chrome.action.setTitle({title: `taking ${isFullPage ? 'full page' : 'viewport'} screenshot...`})
+    log(`preparing to take screenshot`)
+    sendNotification({
+      title: 'Screeenshot capture in progress',
+      message: 'Please do not interact with browser window while image capture is in progress',
+    })
+    chrome.action.setIcon({tabId: targets.activeTab, path: 'assets/in-progress.png'})
+    chrome.action.setTitle({title: 'Screeenshot capture in progress'})
     // init
     q.push({isFullPage})
-    console.log('queue is now', q)
-    const targets = await makeWindowTargets()
+    log('queue is now', q)
     const driver = await new Driver({
       driver: targets.driver,
       spec,
@@ -84,20 +128,24 @@ chrome.action.onClicked.addListener(async () => {
     )
 
     // cleanup
-    console.log('sending screenshot to the content script to store in the system clipboard')
-    chrome.tabs.sendMessage(targets.activeTab,
-      {screenshot}
-    )
-    console.log('notifying the user of completion')
-    await chrome.action.setIcon({path: 'assets/done.png'})
-    await chrome.action.setTitle({title: 'screenshot saved to system clipboard'})
-    await new Promise(res => setTimeout(res, 5000))
+    log('sending screenshot to the content script to store in the system clipboard')
+    await chrome.tabs.sendMessage(targets.activeTab, {screenshot})
+    log('notifying the user of completion')
+    clearNotifications()
+    sendNotification({
+      title: 'Screeenshot captured',
+      message: 'Image captured and saved to your system clipboard',
+    })
+    await chrome.action.setIcon({tabId: targets.activeTab, path: 'assets/done.png'})
+    await chrome.action.setTitle({title: 'Screenshot saved to system clipboard'})
+    await new Promise(res => setTimeout(res, 3000))
+    clearNotifications()
   } finally {
-    console.log('clearing queue')
+    log('clearing queue')
     q.pop()
-    await chrome.action.setIcon({path: 'assets/icon.png'})
+    await chrome.action.setIcon({tabId: targets.activeTab, path: 'assets/icon.png'})
     await chrome.action.setTitle({title})
-    await new Promise(res => setTimeout(res, 1000))
-    console.log('done!')
+    await new Promise(res => setTimeout(res, 5000))
+    log('done!')
   }
 })
