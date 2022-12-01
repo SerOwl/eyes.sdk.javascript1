@@ -6,7 +6,7 @@
   "version_name": "__PACKAGE_VERSION__",
   "action": {
     "default_icon": "assets/icon.png",
-    "default_title": "take a screenshot and save it to your system clipboard"
+    "default_title": "Click to capture screenshot to system clipboard"
   },
   "permissions": [
     "activeTab",
