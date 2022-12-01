@@ -25,7 +25,10 @@ chrome.contextMenus.onClicked.addListener((info, _tab) => {
 })
 
 chrome.storage.local.get(['isFullPage'], ({isFullPage}) => {
-  isFullPage = isFullPage ? isFullPage : true
+  if (!isFullPage) {
+    isFullPage = true
+    chrome.storage.local.set({isFullPage})
+  }
   log('creating context menus', {isFullPage})
   chrome.contextMenus.removeAll(() => {
     try {
@@ -142,7 +145,7 @@ chrome.action.onClicked.addListener(async () => {
     })
     await chrome.action.setIcon({tabId: targets.activeTab, path: 'assets/done.png'})
     await chrome.action.setTitle({title: 'Screenshot saved to system clipboard'})
-    await new Promise(res => setTimeout(res, 3000))
+    await new Promise(res => setTimeout(res, 10000))
     clearNotifications()
   } finally {
     log('clearing queue')
