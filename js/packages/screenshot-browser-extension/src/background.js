@@ -10,31 +10,41 @@ function log(...messages) {
 
 chrome.contextMenus.onClicked.addListener((info, _tab) => {
   const {menuItemId: selectedItem} = info
-  const captureMode = {isFullPage: true}
-  if (selectedItem === 'capture-viewport') {
-    captureMode.isFullPage = false
-    chrome.contextMenus.update('capture-viewport', {checked: true})
-    chrome.contextMenus.update('capture-fullpage', {checked: false})
-  } else if (selectedItem === 'capture-fullpage') {
-    captureMode.isFullPage = true
-    chrome.contextMenus.update('capture-viewport', {checked: false})
-    chrome.contextMenus.update('capture-fullpage', {checked: true})
+  const captureMode = {}
+  if (selectedItem === 'capture-fullpage') captureMode.isFullPage = true
+  else if (selectedItem === 'capture-viewport') captureMode.isFullPage = false
+  else if (selectedItem === 'stitch-mode-css') captureMode.isCss = true
+  else if (selectedItem === 'stitch-mode-scroll') captureMode.isCss = false
+  if (captureMode.isFullPage) {
+    chrome.contextMenus.update('capture-fullpage', {checked: !!captureMode.isFullPage})
+    chrome.contextMenus.update('capture-viewport', {checked: !captureMode.isFullPage})
+  }
+  if (captureMode.isCss) {
+    chrome.contextMenus.update('stitch-mode-css', {checked: !!captureMode.isCss})
+    chrome.contextMenus.update('stitch-mode-scroll', {checked: !captureMode.isCss})
   }
   chrome.storage.local.set(captureMode)
   log('updated capture mode', captureMode)
 })
 
-chrome.storage.local.get(['isFullPage'], ({isFullPage}) => {
+chrome.storage.local.get(['isFullPage', 'isCss'], ({isFullPage, isCss}) => {
   if (!isFullPage) {
     isFullPage = true
     chrome.storage.local.set({isFullPage})
   }
-  log('creating context menus', {isFullPage})
+  if (!isCss) {
+    isCss = true
+    chrome.storage.local.set({isCss})
+  }
+  log('creating context menus', {isFullPage, isCss})
   chrome.contextMenus.removeAll(() => {
     try {
-      const parent = chrome.contextMenus.create({id: 'screenshoter', title: 'screenshoter'})
+      const parent = chrome.contextMenus.create({id: 'screenshoter', title: 'screenshoter settings'})
       chrome.contextMenus.create({id: 'capture-fullpage', parentId: parent, type: 'radio', title: 'capture full page', checked: !!isFullPage})
       chrome.contextMenus.create({id: 'capture-viewport', parentId: parent, type: 'radio', title: 'capture viewport', checked: !isFullPage})
+      chrome.contextMenus.create({id: 'stitch-separator', parentId: parent, type: 'separator'})
+      chrome.contextMenus.create({id: 'stitch-mode-css', parentId: parent, type: 'radio', title: 'stitch with css', checked: !!isCss})
+      chrome.contextMenus.create({id: 'stitch-mode-scroll', parentId: parent, type: 'radio', title: 'stitch with scroll', checked: !isCss})
     } catch(error) {
       console.error(error)
     }
@@ -105,7 +115,7 @@ chrome.action.onClicked.addListener(async () => {
   }
   // pre-init (for scope)
   const title = await chrome.action.getTitle({})
-  const {isFullPage} = await chrome.storage.local.get(['isFullPage'])
+  const {isFullPage, isCss} = await chrome.storage.local.get(['isFullPage', 'isCss'])
   const targets = await makeWindowTargets()
   try {
     log(`preparing to take screenshot`)
@@ -116,7 +126,7 @@ chrome.action.onClicked.addListener(async () => {
     chrome.action.setIcon({tabId: targets.activeTab, path: 'assets/in-progress.png'})
     chrome.action.setTitle({title: 'Screeenshot capture in progress'})
     // init
-    q.push({isFullPage})
+    q.push({isFullPage, isCss})
     log('queue is now', q)
     const driver = await new Driver({
       driver: targets.driver,
@@ -130,7 +140,7 @@ chrome.action.onClicked.addListener(async () => {
       driver,
       {
         fully: !!isFullPage,
-        scrollingMode: 'css',
+        scrollingMode: !!isCss ? 'css' : 'scroll',
       }
     )
 
