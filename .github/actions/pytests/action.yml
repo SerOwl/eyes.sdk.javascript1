@@ -98,9 +98,6 @@ runs:
         echo "::endgroup::"
 
         echo "::group::Running tests"
-        if [ ! -z "${{inputs.test-type}}" ]; then npm run test:${{inputs.test-type}}; else npm run test --if-present; fi
-        echo "::endgroup::"
-
-        echo "::group::Sending reports"
-        if [ "${{inputs.sandbox}}" = "sandbox" ]; then npm run report --if-present -- --sandbox; else npm run report --if-present; fi
+        USDK_BUILD_DIR=`realpath bin`
+        make --directory=${{github.workspace}}/python eyes_selenium_generated_tests
         echo "::endgroup::"
