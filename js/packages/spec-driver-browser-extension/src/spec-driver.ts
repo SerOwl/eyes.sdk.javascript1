@@ -1,6 +1,12 @@
 import browser from 'webextension-polyfill'
 import * as utils from '@applitools/utils'
 
+type CommonSelector<TSelector = never> = string | {selector: TSelector | string; type?: string}
+type Driver = {windowId: number, tabId: number}
+type Context = {windowId: number, tabId: number, frameId: number}
+type El = Element | {'applitools-ref-id': string}
+type Size = {width: number, height: number}
+
 // #region UTILITY
 
 export function isDriver(driver: any) {
@@ -15,7 +21,7 @@ export function isElement(element: any) {
 export function isSelector(selector: any) {
   return utils.types.has(selector, ['type', 'selector'])
 }
-export function transformSelector(selector: any) {
+export function transformSelector(selector: CommonSelector) {
   if (utils.types.isString(selector)) {
     return {type: 'css', selector: selector}
   } else if (utils.types.has(selector, 'selector')) {
@@ -24,7 +30,7 @@ export function transformSelector(selector: any) {
   }
   return selector
 }
-export function extractContext(driver: any) {
+export function extractContext(driver: Driver) {
   return {...driver, frameId: 0}
 }
 export function isStaleElementError(error: any) {
@@ -37,7 +43,7 @@ export function isStaleElementError(error: any) {
 
 // #region COMMANDS
 
-export async function executeScript(context: any, script: any, arg: any) {
+export async function executeScript(context: Context, script: any, arg: any) {
   let result, error: any
   [{result, error}] = await browser.scripting.executeScript({
     target: {tabId: context.tabId, frameIds: [context.frameId || 0]},
@@ -52,15 +58,15 @@ export async function executeScript(context: any, script: any, arg: any) {
   }
   return result
 }
-export async function mainContext(context: any) {
+export async function mainContext(context: Context) {
   return {...context, frameId: 0}
 }
-export async function parentContext(context: any) {
+export async function parentContext(context: Context) {
   const frames = await browser.webNavigation.getAllFrames({tabId: context.tabId})
   const frame = frames.find(frame => frame.frameId === context.frameId)
   return {...context, frameId: frame.parentFrameId}
 }
-export async function childContext(context: any, element: any) {
+export async function childContext(context: Context, element: El) {
   const childFrameId = await new Promise(async (resolve, reject) => {
     const key = utils.general.guid()
     browser.runtime.onMessage.addListener(handler)
@@ -83,7 +89,7 @@ export async function childContext(context: any, element: any) {
 
   return {...context, frameId: childFrameId}
 }
-export async function findElement(context: any, selector: any, parent: any) {
+export async function findElement(context: Context, selector: CommonSelector, parent: any) {
   const [{result}] = await browser.scripting.executeScript({
     target: {tabId: context.tabId, frameIds: [context.frameId || 0]},
     /* eslint-disable no-undef */
@@ -106,7 +112,7 @@ export async function findElement(context: any, selector: any, parent: any) {
   })
   return result
 }
-export async function findElements(context: any, selector: any, parent: any) {
+export async function findElements(context: Context, selector: CommonSelector, parent: any) {
   const [{result}] = await browser.scripting.executeScript({
     target: {tabId: context.tabId, frameIds: [context.frameId || 0]},
     /* eslint-disable no-undef */
@@ -132,7 +138,7 @@ export async function findElements(context: any, selector: any, parent: any) {
   })
   return result
 }
-export async function getWindowSize(driver: any) {
+export async function getWindowSize(driver: Driver): Promise<Size> {
   const [{result}] = await browser.scripting.executeScript({
     target: {tabId: driver.tabId, frameIds: [0]},
     // @ts-ignore
@@ -140,7 +146,7 @@ export async function getWindowSize(driver: any) {
   })
   return result
 }
-export async function setWindowSize(driver: any, size: any) {
+export async function setWindowSize(driver: Driver, size: Size) {
   await browser.windows.update(driver.windowId, {
     state: 'normal',
     left: 0,
@@ -149,7 +155,7 @@ export async function setWindowSize(driver: any, size: any) {
     height: size.height,
   })
 }
-export async function getCookies(_driver: any) {
+export async function getCookies(_driver: Driver) {
   const cookies = await browser.cookies.getAll({})
   return cookies.map(cookie => {
     const copy = {
@@ -167,7 +173,7 @@ export async function getCookies(_driver: any) {
     return copy
   })
 }
-export async function takeScreenshot(driver: any) {
+export async function takeScreenshot(driver: Driver) {
   const [activeTab] = await browser.tabs.query({windowId: driver.windowId, active: true})
   await browser.tabs.update(driver.tabId, {active: true})
   const url = await browser.tabs.captureVisibleTab(driver.windowId, {format: 'png'})
@@ -175,11 +181,11 @@ export async function takeScreenshot(driver: any) {
   await utils.general.sleep(500)
   return url.replace(/^data:image\/png;base64,/, '')
 }
-export async function getTitle(driver: any) {
+export async function getTitle(driver: Driver) {
   const {title} = await browser.tabs.get(driver.tabId)
   return title
 }
-export async function getUrl(driver: any) {
+export async function getUrl(driver: Driver) {
   const {url} = await browser.tabs.get(driver.tabId)
   return url
 }
