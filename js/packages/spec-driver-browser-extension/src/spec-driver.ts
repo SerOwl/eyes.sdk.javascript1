@@ -1,11 +1,11 @@
 import browser from 'webextension-polyfill'
 import * as utils from '@applitools/utils'
+import type {Size} from '@applitools/utils'
 
 type CommonSelector<TSelector = never> = string | {selector: TSelector | string; type?: string}
 type Driver = {windowId: number, tabId: number}
 type Context = {windowId: number, tabId: number, frameId: number}
-type El = Element | {'applitools-ref-id': string}
-type Size = {width: number, height: number}
+type El = globalThis.Element | {'applitools-ref-id': string}
 
 // #region UTILITY
 
@@ -89,7 +89,7 @@ export async function childContext(context: Context, element: El) {
 
   return {...context, frameId: childFrameId}
 }
-export async function findElement(context: Context, selector: CommonSelector, parent: any) {
+export async function findElement(context: Context, selector: CommonSelector, parent?: Element | Node) {
   const [{result}] = await browser.scripting.executeScript({
     target: {tabId: context.tabId, frameIds: [context.frameId || 0]},
     /* eslint-disable no-undef */
@@ -112,7 +112,7 @@ export async function findElement(context: Context, selector: CommonSelector, pa
   })
   return result
 }
-export async function findElements(context: Context, selector: CommonSelector, parent: any) {
+export async function findElements(context: Context, selector: CommonSelector, parent?: Element | Node) {
   const [{result}] = await browser.scripting.executeScript({
     target: {tabId: context.tabId, frameIds: [context.frameId || 0]},
     /* eslint-disable no-undef */
