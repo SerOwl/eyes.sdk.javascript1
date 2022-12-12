@@ -43,7 +43,7 @@ export function isStaleElementError(error: any) {
 
 // #region COMMANDS
 
-export async function executeScript(context: Context, script: any, arg: any) {
+export async function executeScript(context: Context, script: (arg: any) => any, arg: any) {
   let result, error: any
   [{result, error}] = await browser.scripting.executeScript({
     target: {tabId: context.tabId, frameIds: [context.frameId || 0]},
