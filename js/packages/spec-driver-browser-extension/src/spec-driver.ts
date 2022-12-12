@@ -7,6 +7,12 @@ type Driver = {windowId: number, tabId: number}
 type Context = {windowId: number, tabId: number, frameId: number}
 type El = globalThis.Element | {'applitools-ref-id': string}
 
+declare global {
+  interface Window {
+    refer: any
+  }
+}
+
 // #region UTILITY
 
 export function isDriver(driver: any) {
@@ -79,8 +85,7 @@ export async function childContext(context: Context, element: El) {
     await browser.scripting.executeScript({
       target: {tabId: context.tabId, frameIds: [context.frameId || 0]},
       func: (element, key) => {
-        // @ts-ignore
-        refer.deref(element).contentWindow.postMessage({key, isApplitools: true}, '*') // eslint-disable-line no-undef
+        window.refer.deref(element).contentWindow.postMessage({key, isApplitools: true}, '*') // eslint-disable-line no-undef
       },
       args: [element, key],
     })
@@ -95,14 +100,10 @@ export async function findElement(context: Context, selector: CommonSelector, pa
     /* eslint-disable no-undef */
     func: (selector, parent) => {
       if (selector.type === 'css') {
-        // @ts-ignore
-        const root = parent ? refer.deref(parent) : document
-        // @ts-ignore
-        return refer.ref(root.querySelector(selector.selector))
+        const root = parent ? window.refer.deref(parent) : document
+        return window.refer.ref(root.querySelector(selector.selector))
       } else if (selector.type === 'xpath') {
-        // @ts-ignore
-        return refer.ref(
-          // @ts-ignore
+        return window.refer.ref(
           document.evaluate(selector.selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE).singleNodeValue,
         )
       }
@@ -118,17 +119,13 @@ export async function findElements(context: Context, selector: CommonSelector, p
     /* eslint-disable no-undef */
     func: (selector, parent) => {
       if (selector.type === 'css') {
-        // @ts-ignore
-        const root = parent ? refer.deref(parent) : document
-        // @ts-ignore
-        return Array.from(root.querySelectorAll(selector.selector), refer.ref)
+        const root = parent ? window.refer.deref(parent) : document
+        return Array.from(root.querySelectorAll(selector.selector), window.refer.ref)
       } else if (selector.type === 'xpath') {
-        // @ts-ignore
         const iterator = document.evaluate(selector.selector, document, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE)
         const elements = []
         for (let element = iterator.iterateNext(); element !== null; element = iterator.iterateNext()) {
-          // @ts-ignore
-          elements.push(refer.ref(element))
+          elements.push(window.refer.ref(element))
         }
         return elements
       }
@@ -141,7 +138,6 @@ export async function findElements(context: Context, selector: CommonSelector, p
 export async function getWindowSize(driver: Driver): Promise<Size> {
   const [{result}] = await browser.scripting.executeScript({
     target: {tabId: driver.tabId, frameIds: [0]},
-    // @ts-ignore
     func: () => ({width: window.outerWidth, height: window.outerHeight}),
   })
   return result
