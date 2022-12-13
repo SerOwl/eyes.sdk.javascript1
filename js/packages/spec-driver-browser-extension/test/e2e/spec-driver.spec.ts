@@ -7,7 +7,8 @@ describe('spec driver', async () => {
   const url = 'https://applitools.github.io/demo/TestPages/FramesTestPage/'
 
   async function build(env: any) {
-    return spec.build({...env, extension: path.resolve(process.cwd(), './dist')})
+    const extPath = path.resolve(process.cwd(), 'test/ext/dist')
+    return spec.build({...env, extension: extPath})
   }
 
   describe('onscreen desktop (@chrome)', async () => {
@@ -159,7 +160,7 @@ describe('spec driver', async () => {
         // @ts-ignore
         const frames = await browser.webNavigation.getAllFrames({tabId: driver.tabId})
         return frames.find(
-          frame => frame.url === 'https://applitools.github.io/demo/TestPages/FramesTestPage/frame2.html',
+          (frame: any) => frame.url === 'https://applitools.github.io/demo/TestPages/FramesTestPage/frame2.html',
         )
       },
       [driver],
