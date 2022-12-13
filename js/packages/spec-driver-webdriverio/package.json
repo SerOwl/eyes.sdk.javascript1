@@ -131,8 +131,7 @@
   },
   "peerDependencies": {
     "webdriverio": ">=5.0.0",
-    "chromedriver": "^101.0.0",
-    "@applitools/test-utils": "1.5.2"
+    "chromedriver": "^101.0.0"
   },
   "engines": {
     "node": ">=12.13.0"
