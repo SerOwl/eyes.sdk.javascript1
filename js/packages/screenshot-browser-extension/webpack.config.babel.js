@@ -12,7 +12,6 @@ export default {
   entry: {
     content: ['./src/content-script'],
     background: ['./src/background'],
-    popup: ['./src/popup'],
   },
   output: {
     path: path.resolve(__dirname, './dist'),
@@ -76,10 +75,6 @@ export default {
           from: path.resolve(path.dirname(require.resolve('@applitools/dom-capture')), './dist/*.js'),
           to: './assets/dom-capture/[name][ext]',
           filter: resourcePath => /(captureDomAndPoll|pollResult)\.js$/.test(resourcePath),
-        },
-        {
-          from: './src/popup.html',
-          to: './popup.html',
         }
       ],
     }),
