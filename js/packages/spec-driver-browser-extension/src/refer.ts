@@ -46,3 +46,5 @@ export function makeRefer({check = (_arg: any) => true, validate = (_arg: any) =
     }
   }
 }
+
+export type Ref = {'applitools-ref-id': string}

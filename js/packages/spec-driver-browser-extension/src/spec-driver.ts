@@ -1,11 +1,12 @@
 import browser from 'webextension-polyfill'
 import * as utils from '@applitools/utils'
 import type {Size} from '@applitools/utils'
+import type {Ref} from './refer'
 
 type CommonSelector<TSelector = never> = string | {selector: TSelector | string; type?: string}
 type Driver = {windowId: number, tabId: number}
 type Context = {windowId: number, tabId: number, frameId: number}
-type El = globalThis.Element | {'applitools-ref-id': string}
+type Element = globalThis.Element | Ref
 
 declare global {
   interface Window {
@@ -72,7 +73,7 @@ export async function parentContext(context: Context) {
   const frame = frames.find(frame => frame.frameId === context.frameId)
   return {...context, frameId: frame.parentFrameId}
 }
-export async function childContext(context: Context, element: El) {
+export async function childContext(context: Context, element: Element) {
   const childFrameId = await new Promise(async (resolve, reject) => {
     const key = utils.general.guid()
     browser.runtime.onMessage.addListener(handler)
