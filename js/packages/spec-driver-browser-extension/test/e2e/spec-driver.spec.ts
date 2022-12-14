@@ -30,7 +30,6 @@ describe('spec driver', async () => {
           console.log(`${i}: ${JSON.stringify(await msg.args()[i].jsonValue())}`)
       })
 
-      // @ts-ignore
       const [activeTab] = await backgroundPage.evaluate(() => browser.tabs.query({active: true}))
       driver = {windowId: activeTab.windowId, tabId: activeTab.id}
     })
@@ -142,7 +141,6 @@ describe('spec driver', async () => {
   async function parentContext() {
     const nestedFrame = await backgroundPage.evaluate(
       async ([driver]) => {
-        // @ts-ignore
         const frames = await browser.webNavigation.getAllFrames({tabId: driver.tabId})
         return frames[frames.length - 1]
       },
@@ -157,7 +155,6 @@ describe('spec driver', async () => {
   async function childContext() {
     const childFrame = await backgroundPage.evaluate(
       async ([driver]) => {
-        // @ts-ignore
         const frames = await browser.webNavigation.getAllFrames({tabId: driver.tabId})
         return frames.find(
           (frame: any) => frame.url === 'https://applitools.github.io/demo/TestPages/FramesTestPage/frame2.html',
@@ -167,10 +164,8 @@ describe('spec driver', async () => {
     )
     const childContext = await backgroundPage.evaluate(
       async ([context]) => {
-        // @ts-ignore
         const [{result: element}] = await browser.scripting.executeScript({
           target: {tabId: context.tabId, frameIds: [context.frameId]},
-        // @ts-ignore
           func: () => refer.ref(document.querySelector('[src="./frame2.html"]')), // eslint-disable-line no-undef
         })
         return spec.childContext(context, element)
@@ -242,7 +237,6 @@ describe('spec driver', async () => {
       const elementKey = await expected.evaluate(element => (element.dataset.key = 'element-key'))
       const isCorrectElement = await backgroundPage.evaluate(
         async ([context, element, elementKey]) => {
-          // @ts-ignore
           const [{result}] = await browser.scripting.executeScript({
             target: {tabId: context.tabId, frameIds: [context.frameId]},
             func: (element, elementKey) => refer.deref(element).dataset.key === elementKey, // eslint-disable-line no-undef
@@ -274,7 +268,6 @@ describe('spec driver', async () => {
       const elementKey = await expectedElement.evaluate(element => (element.dataset.key = 'element-key'))
       const isCorrectElement = await backgroundPage.evaluate(
         async ([context, element, elementKey]) => {
-          // @ts-ignore
           const [{result}] = await browser.scripting.executeScript({
             target: {tabId: context.tabId, frameIds: [context.frameId]},
             func: (element, elementKey) => refer.deref(element).dataset.key === elementKey, // eslint-disable-line no-undef

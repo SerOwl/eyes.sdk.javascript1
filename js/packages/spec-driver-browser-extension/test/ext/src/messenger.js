@@ -32,7 +32,6 @@ export function makeMessenger({sendMessage, onMessage}) {
   }
 
   function emit(type, payload, ...rest) {
-    console.log('emit called', arguments)
     const message = utils.types.isString(type)
       ? {name: type, from: messengerId, payload}
       : {name: type.name, key: type.key, from: messengerId, payload}
