@@ -79,8 +79,5 @@
     "ts-node": "^10.8.0",
     "ttypescript": "^1.5.13",
     "typescript": "^4.8.4"
-  },
-  "engines": {
-    "node": ">=12.13.0"
   }
 }
