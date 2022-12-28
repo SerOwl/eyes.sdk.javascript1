@@ -68,8 +68,8 @@ export default function makePluginExport({startServer, eyesConfig}: any) {
         return origOn.call(this, eventName, handlerToCall)
 
         async function handlerThatCallsUserDefinedHandler(...args: any[]) {
-          const [err] = await presult(Promise.resolve(globalHooks[eventName].apply(this, ...args)))
-          await handler.apply(this, ...args)
+          const [err] = await presult(Promise.resolve(globalHooks[eventName].apply(this, args)))
+          await handler.apply(this, args)
           if (err) {
             throw err
           }
