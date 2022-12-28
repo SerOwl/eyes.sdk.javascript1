@@ -1,16 +1,16 @@
-'use strict';
+'use strict'
 
 function makeSendRequest(send) {
   return function sendRequest(args) {
     return send(args)
-      .then((resp) => resp.json())
-      .then((body) => {
+      .then(resp => resp.json())
+      .then(body => {
         if (!body.success) {
-          throw new Error(body.error);
+          throw new Error(body.error)
         }
-        return body.result;
-      });
-  };
+        return body.result
+      })
+  }
 }
 
-module.exports = makeSendRequest;
+module.exports = makeSendRequest

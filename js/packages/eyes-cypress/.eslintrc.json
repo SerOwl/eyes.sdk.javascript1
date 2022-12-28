@@ -37,25 +37,7 @@
     "node"
   ],
   "rules": {
-    "prettier/prettier": [
-      "error",
-      {
-        "semi": true,
-        "parser": "babel",
-        "printWidth": 100,
-        "singleQuote": true,
-        "trailingComma": "all",
-        "bracketSpacing": false,
-        "jsxBracketSameLine": true
-      }
-    ],
-    "node/no-unsupported-features/es-syntax": [
-      "error",
-      {
-        "version": ">=8.0.0",
-        "ignores": ["restSpreadProperties"]
-      }
-    ],
+    "prettier/prettier": ["error", {"arrowParens": "avoid", "printWidth": 120}],
     "no-process-exit": "off",
     "no-const-assign": "error",
     "no-this-before-super": "error",
@@ -63,18 +45,15 @@
     "no-unreachable": "warn",
     "no-unused-vars": [
       1,
-      {
-        "varsIgnorePattern": "^_",
-        "args": "all",
-        "argsIgnorePattern": "^_"
-      }
+      {"varsIgnorePattern": "^_", "args": "all", "argsIgnorePattern": "^_"}
     ],
     "constructor-super": "warn",
     "valid-typeof": "warn",
     "mocha-no-only/mocha-no-only": "error",
-    "node/no-unpublished-require": [
-      "off"
-    ]
+    "node/no-unpublished-require": ["off"],
+    "node/no-missing-require": ["error", {
+      "allowModules": ["@applitools/driver"]
+    }]
   },
   // =================================
   // Overrides for Specific Files
@@ -97,6 +76,7 @@
       // =================================
       // allow ESLint to understand TypeScript syntax
       // https://github.com/iamturns/eslint-config-airbnb-typescript/blob/master/lib/shared.js#L10
+
       "parser": "@typescript-eslint/parser",
       "parserOptions": {
         "ecmaVersion": 2020,
