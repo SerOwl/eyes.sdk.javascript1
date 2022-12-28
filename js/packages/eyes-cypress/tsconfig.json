@@ -1,6 +1,7 @@
 {
   "include": ["src", "./index.d.ts"],
   "compilerOptions": {
+    "baseUrl": ".",
     "rootDir": "src",
     "outDir": "dist",
     "declarationDir": "types",

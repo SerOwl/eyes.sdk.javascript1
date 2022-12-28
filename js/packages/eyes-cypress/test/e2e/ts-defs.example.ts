@@ -1,4 +1,5 @@
-/*global cy*/
+// eslint-disable-next-line
+/// <reference path="../../types/plugin/index.d.ts" />
 
 cy.eyesOpen()
 

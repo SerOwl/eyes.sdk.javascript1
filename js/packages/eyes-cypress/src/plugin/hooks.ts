@@ -2,13 +2,13 @@ import handleTestResults from './handleTestResults'
 
 export default function makeGlobalRunHooks({closeManager, closeBatches, closeUniversalServer}: any) {
   return {
-    'before:run': ({config}: any) => {
-      if (!config.isTextTerminal) return
+    'before:run': (config: any) => {
+      if (typeof config === 'undefined' || !config.isTextTerminal) return
     },
 
-    'after:run': async ({config}: any) => {
+    'after:run': async (config: any) => {
       try {
-        if (!config.isTextTerminal) return
+        if (typeof config === 'undefined' || !config.isTextTerminal) return
         const summaries = await closeManager()
 
         let testResults

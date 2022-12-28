@@ -1,4 +1,4 @@
-const {defineConfig} = require('cypress');
+const {defineConfig} = require('./node_modules/cypress');
 
 module.exports = defineConfig({
   video: false,
