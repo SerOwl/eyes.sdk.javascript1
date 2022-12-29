@@ -13,6 +13,6 @@ export default function ({startServer, eyesConfig}: any) {
       }
     }
 
-    return Object.assign(cypressConfig, eyesConfig, {eyesPort: port})
+    return Object.assign({}, cypressConfig, eyesConfig, {eyesPort: port})
   }
 }
