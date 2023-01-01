@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.base",
+  "compilerOptions": {
+    "types": ["node", "mocha", "@wdio/globals/types", "./types/v8"],
+  }
+}

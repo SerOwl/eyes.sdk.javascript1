@@ -1,5 +1,5 @@
 'use strict'
-import chalk from 'chalk'
+const chalk = require('chalk')
 const MSG = `
 Important notice: Your Applitools visual tests are currently running with a testConcurrency value of 5.
 This means that only up to 5 visual tests can run in parallel, and therefore the execution might be slower.
