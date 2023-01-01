@@ -14,12 +14,12 @@ interface CypressCheckSettings extends api.CheckSettingsAutomationPlain<Element,
   selector?: Selector
   element?: Element
 
-  ignore?: MaybeArray<CypressCheckSettings['ignoreRegions'][number] | LegacyRegion>
-  layout?: MaybeArray<CypressCheckSettings['layoutRegions'][number] | LegacyRegion>
-  content?: MaybeArray<CypressCheckSettings['contentRegions'][number] | LegacyRegion>
-  strict?: MaybeArray<CypressCheckSettings['strictRegions'][number] | LegacyRegion>
+  ignore?: MaybeArray<NonNullable<CypressCheckSettings['ignoreRegions']>[number] | LegacyRegion>
+  layout?: MaybeArray<NonNullable<CypressCheckSettings['layoutRegions']>[number] | LegacyRegion>
+  content?: MaybeArray<NonNullable<CypressCheckSettings['contentRegions']>[number] | LegacyRegion>
+  strict?: MaybeArray<NonNullable<CypressCheckSettings['strictRegions']>[number] | LegacyRegion>
   floating?: MaybeArray<
-    | CypressCheckSettings['floatingRegions'][number]
+    | NonNullable<CypressCheckSettings['floatingRegions']>[number]
     | (({element: Element} | Selector | LegacyRegion) & {
         maxUpOffset?: number
         maxDownOffset?: number
@@ -28,7 +28,7 @@ interface CypressCheckSettings extends api.CheckSettingsAutomationPlain<Element,
       })
   >
   accessibility?: MaybeArray<
-    | CypressCheckSettings['accessibilityRegions'][number]
+    | NonNullable<CypressCheckSettings['accessibilityRegions']>[number]
     | (({element: Element} | Selector | LegacyRegion) & {accessibilityType?: api.AccessibilityRegionTypePlain})
   >
   scriptHooks?: CypressCheckSettings['hooks']
@@ -38,18 +38,18 @@ interface CypressCheckSettings extends api.CheckSettingsAutomationPlain<Element,
 
 interface CypressEyesConfig extends api.ConfigurationPlain<Element, Selector> {
   browser?: MaybeArray<
-    | CypressEyesConfig['browsersInfo'][number]
+    | NonNullable<CypressEyesConfig['browsersInfo']>[number]
     | {deviceName: string; screenOrientation?: api.ScreenOrientationPlain; name?: string}
   >
 
-  batchId?: CypressEyesConfig['batch']['id']
-  batchName?: CypressEyesConfig['batch']['name']
-  batchSequence?: CypressEyesConfig['batch']['sequenceName']
-  notifyOnCompletion?: CypressEyesConfig['batch']['notifyOnCompletion']
+  batchId?: NonNullable<CypressEyesConfig['batch']>['id']
+  batchName?: NonNullable<CypressEyesConfig['batch']>['name']
+  batchSequence?: NonNullable<CypressEyesConfig['batch']>['sequenceName']
+  notifyOnCompletion?: NonNullable<CypressEyesConfig['batch']>['notifyOnCompletion']
 
   envName?: CypressEyesConfig['environmentName']
 
-  accessibilitySettings?: CypressEyesConfig['defaultMatchSettings']['accessibilitySettings']
+  accessibilitySettings?: NonNullable<CypressEyesConfig['defaultMatchSettings']>['accessibilitySettings']
 }
 
 declare global {

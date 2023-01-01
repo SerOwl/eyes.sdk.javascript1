@@ -1,16 +1,17 @@
 import {makeCore} from '@applitools/core'
 import * as api from '@applitools/eyes-api'
 import * as spec from './spec-driver'
-import type {Driver, Element, Selector} from './spec-driver'
 
-const sdk: any = makeCore({
+const sdk = makeCore({
   agentId: `eyes.nightwatch/${require('../package.json').version}`,
   spec,
 })
 
 export * from '@applitools/eyes-api'
 
-export {Driver, Element, Selector}
+export type Driver = spec.Driver
+export type Element = spec.Element | spec.ResponseElement
+export type Selector = spec.Selector
 
 export class Eyes extends api.Eyes<Driver, Element, Selector> {
   protected static readonly _spec = sdk
@@ -25,11 +26,13 @@ export class Configuration extends api.Configuration<Element, Selector> {
 
 export type OCRRegion = api.OCRRegion<Element, Selector>
 
-export type CheckSettingsPlain = api.CheckSettingsAutomationPlain<Element, Selector>
+export type CheckSettingsAutomationPlain = api.CheckSettingsAutomationPlain<Element, Selector>
 
-export class CheckSettings extends api.CheckSettingsAutomation<Element, Selector> {
+export class CheckSettingsAutomation extends api.CheckSettingsAutomation<Element, Selector> {
   protected static readonly _spec = sdk
 }
+
+export class CheckSettings extends CheckSettingsAutomation {}
 
 export const Target = {...api.Target, spec: sdk} as api.Target<Element, Selector>
 

@@ -1,6 +1,6 @@
 {
   "name": "@applitools/spec-driver-webdriverio",
-  "version": "1.4.6",
+  "version": "1.4.16",
   "keywords": [
     "webdriverio",
     "wdio",
@@ -82,14 +82,14 @@
   ],
   "scripts": {
     "lint": "eslint '**/*.ts'",
-    "build": "ttsc --project tsconfig.$([ ! -z $APPLITOOLS_WEBDRIVERIO_MAJOR_VERSION ] && echo v$APPLITOOLS_WEBDRIVERIO_MAJOR_VERSION || echo build).json",
+    "build": "ttsc --project tsconfig.$([ ! -z $APPLITOOLS_WEBDRIVERIO_VERSION ] && echo v${APPLITOOLS_WEBDRIVERIO_VERSION%%.*} || echo build).json",
     "test": "mocha ./test/**/*.spec.ts --exit --no-timeouts -r ts-node/register -r @applitools/test-utils/mocha-hooks/docker",
     "test:sanity": "yarn test",
     "test:watch": "yarn test --watch --extension ts",
     "setup": "yarn docker:setup",
     "docker:setup": "node ../scripts/scripts/generate-docker-compose-config.js && docker-compose up -d",
     "docker:teardown": "docker-compose down",
-    "upgrade:framework": "if [ ! -z $APPLITOOLS_WEBDRIVERIO_MAJOR_VERSION ]; then packagejson=`cat package.json`; yarn upgrade --no-lockfile webdriverio@$APPLITOOLS_WEBDRIVERIO_MAJOR_VERSION; echo \"$packagejson\" > package.json; fi",
+    "upgrade:framework": "if [ ! -z $APPLITOOLS_WEBDRIVERIO_VERSION ]; then packagejson=`cat package.json`; yarn upgrade --no-lockfile webdriverio@$APPLITOOLS_WEBDRIVERIO_VERSION; echo \"$packagejson\" > package.json; fi",
     "deps": "bongo deps",
     "gh:test": "gh workflow run test.yml --ref $(git rev-parse --abbrev-ref HEAD) -f packages='spec-webdriverio' -f links='types utils test-utils'",
     "gh:publish": "gh workflow run publish-spec-webdriverio.yml --ref $(git rev-parse --abbrev-ref HEAD)",
@@ -103,14 +103,14 @@
     }
   },
   "dependencies": {
-    "@applitools/driver": "1.11.7",
-    "@applitools/utils": "1.3.16"
+    "@applitools/driver": "1.11.20",
+    "@applitools/utils": "1.3.22"
   },
   "devDependencies": {
     "@applitools/api-extractor": "1.2.11",
     "@applitools/bongo": "^2.2.0",
     "@applitools/scripts": "1.2.0",
-    "@applitools/test-utils": "1.5.2",
+    "@applitools/test-utils": "1.5.5",
     "@types/mocha": "^9.1.1",
     "@types/node": "12",
     "@typescript-eslint/eslint-plugin": "^5.27.0",

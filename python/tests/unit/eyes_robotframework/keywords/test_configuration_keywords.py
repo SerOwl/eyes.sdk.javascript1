@@ -1,11 +1,14 @@
 def test_create_batch_info(configuration_keyword):
     batch_id = configuration_keyword.create_batch_info(
-        name="Batch Name", batch_sequence_name="Sequence Name"
+        name="Batch Name",
+        batch_sequence_name="Sequence Name",
+        notify_on_completion=True,
     )
     batch = configuration_keyword.ctx._batch_registry[batch_id]
     assert batch.name == "Batch Name"
     assert batch.id == batch_id
     assert batch.sequence_name == "Sequence Name"
+    assert batch.notify_on_completion
 
 
 def test_set_nmg_capabilities_no_data_should_added(
@@ -21,7 +24,10 @@ def test_set_nmg_capabilities_no_data_should_added(
     assert "optionalIntentArguments" not in caps
 
 
-def test_set_nmg_capabilities(configuration_keyword_with_native_mobile_grid):
+def test_set_nmg_capabilities(
+    configuration_keyword_with_native_mobile_grid, monkeypatch
+):
+    monkeypatch.setenv("APPLITOOLS_API_KEY", "dummy")
     caps = {
         "platformName": "iOS",
         "platformVersion": "15.4",
@@ -32,7 +38,10 @@ def test_set_nmg_capabilities(configuration_keyword_with_native_mobile_grid):
     assert caps["optionalIntentArguments"]
 
 
-def test_create_nmg_capabilities(configuration_keyword_with_native_mobile_grid):
+def test_create_nmg_capabilities(
+    configuration_keyword_with_native_mobile_grid, monkeypatch
+):
+    monkeypatch.setenv("APPLITOOLS_API_KEY", "dummy")
     res = configuration_keyword_with_native_mobile_grid.eyes_create_nmg_capabilities(
         platformName="iOS", platformVersion="15.4", deviceName="iPhone 13 Simulator"
     )

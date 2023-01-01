@@ -1,4 +1,4 @@
-import type {EyesManager, Eyes, TestResult} from './types'
+import type {Batch, EyesManager, Eyes, TestResult} from './types'
 import type {Core as BaseCore} from '@applitools/core-base'
 import {type Logger} from '@applitools/logger'
 import {type SpecDriver} from '@applitools/driver'
@@ -27,31 +27,43 @@ export function makeMakeManager<TDriver, TContext, TElement, TSelector>({
   logger: defaultLogger,
 }: Options<TDriver, TContext, TElement, TSelector>) {
   return async function makeManager<TType extends 'classic' | 'ufg' = 'classic'>({
-    type,
+    type = 'classic' as TType,
     concurrency = defaultConcurrency,
     legacyConcurrency,
+    batch,
     agentId = type === 'ufg' ? defaultAgentId?.replace(/(\/\d)/, '.visualgrid$1') : defaultAgentId,
     logger = defaultLogger,
   }: {
     type?: TType
     concurrency?: number
+    /** @deprecated */
     legacyConcurrency?: number
+    batch?: Batch
     agentId?: string
     logger?: Logger
-  } = {}): Promise<EyesManager<TDriver, TElement, TSelector, TType>> {
-    core ??= makeBaseCore({agentId, cwd, logger})
+  } = {}): Promise<EyesManager<TDriver, TContext, TElement, TSelector, TType>> {
     concurrency ??= utils.types.isInteger(legacyConcurrency) ? legacyConcurrency * 5 : 5
-    const typedCore = type === 'ufg' ? makeUFGCore({spec, core, concurrency, logger}) : makeClassicCore({spec, core, logger})
-
-    const storage = [] as {eyes: Eyes<TDriver, TElement, TSelector, TType>; promise?: Promise<TestResult<TType>[]>}[]
+    batch ??= {}
+    batch.id ??= `generated-${utils.general.guid()}`
+    core ??= makeBaseCore({agentId, cwd, logger})
+    const cores = {
+      ufg: makeUFGCore({spec, core, concurrency, logger}),
+      classic: makeClassicCore({spec, core, logger}),
+    }
+    const storage = [] as {eyes: Eyes<TDriver, TContext, TElement, TSelector, TType>; promise?: Promise<TestResult<TType>[]>}[]
     // open eyes with result storage
-    const openEyes = utils.general.wrap(makeOpenEyes({spec, core: typedCore, logger}), async (openEyes, options) => {
+    const openEyes = utils.general.wrap(makeOpenEyes({type, batch, spec, core, cores, logger}), async (openEyes, options) => {
       const eyes = await openEyes(options)
       const item = {eyes} as typeof storage[number]
       storage.push(item)
       return utils.general.extend(eyes, {
         close(options) {
           const promise = eyes.close(options)
+          item.promise ??= promise
+          return promise
+        },
+        checkAndClose(options) {
+          const promise = eyes.checkAndClose(options)
           item.promise ??= promise
           return promise
         },
@@ -65,7 +77,7 @@ export function makeMakeManager<TDriver, TContext, TElement, TSelector>({
 
     return {
       openEyes,
-      closeManager: makeCloseManager({core: typedCore, storage, logger}),
+      closeManager: makeCloseManager({core, storage, logger}),
     }
   }
 }

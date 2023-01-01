@@ -106,10 +106,19 @@ const DEVICES = {
     type: 'sauce',
     url: SAUCE_SERVER_URL,
     capabilities: {
-      platformName: 'iOS',
-      platformVersion: '13.0',
+      w3c: {
+        platformName: 'iOS',
+        'appium:platformVersion': '13.0',
+        'appium:deviceName': 'iPhone XS Simulator',
+      },
+      legacy: {
+        platformName: 'iOS',
+        platformVersion: '13.0',
+        deviceName: 'iPhone XS Simulator',
+      },
+    },
+    options: {
       appiumVersion: '1.19.2',
-      deviceName: 'iPhone XS Simulator',
       ...SAUCE_CREDENTIALS,
     },
   },
@@ -612,7 +621,7 @@ function parseEnv(
       env.url = new URL(process.env.CVG_TESTS_EG_REMOTE)
     }
     if (injectUFGLib) {
-      env.capabilities.processArguments = {
+      env.capabilities[legacy ? 'processArguments' : 'appium:processArguments'] = {
         args: [],
         env: {
           DYLD_INSERT_LIBRARIES:

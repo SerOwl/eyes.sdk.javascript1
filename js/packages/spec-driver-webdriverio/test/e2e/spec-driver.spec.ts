@@ -1,4 +1,5 @@
-import {type Size, type Cookie} from '@applitools/driver'
+import type {Size} from '@applitools/utils'
+import {type Cookie} from '@applitools/driver'
 import assert from 'assert'
 import * as spec from '../../src'
 import * as utils from '@applitools/utils'
@@ -145,7 +146,10 @@ describe('spec driver', async () => {
       await findElements({input: {selector: 'non-existent'}, expected: []})
     })
     it('findElements(within-element)', async () => {
-      findElements({input: {selector: 'div', parent: await browser.$('#stretched')}})
+      await findElements({input: {selector: 'div', parent: await browser.$('#stretched')}})
+    })
+    it('setElementText(element, text)', async () => {
+      await setElementText({input: {element: await browser.$('input'), text: 'Ad multos annos'}})
     })
     it('getWindowSize()', async () => {
       await getWindowSize()
@@ -306,10 +310,13 @@ describe('spec driver', async () => {
       await findElements({input: {selector}})
     })
     it('findElements(within-element)', async () => {
-      findElements({input: {selector: 'div', parent: await browser.$('#stretched')}})
+      await findElements({input: {selector: 'div', parent: await browser.$('#stretched')}})
     })
     it('findElements(non-existent)', async () => {
-      findElements({input: {selector: 'non-existent'}, expected: []})
+      await findElements({input: {selector: 'non-existent'}, expected: []})
+    })
+    it('setElementText(element, text)', async () => {
+      await setElementText({input: {element: await browser.$('input'), text: 'Ad multos annos'}})
     })
     it('getWindowSize()', async () => {
       await getWindowSize()
@@ -419,6 +426,15 @@ describe('spec driver', async () => {
     })
     it('switchWorld(name)', async () => {
       await switchWorld({input: {name: 'WEBVIEW_com.applitools.eyes.android'}})
+    })
+  })
+
+  describe('browser with saucelabs', async () => {
+    it('extractHostName()', async () => {
+      ;[browser, destroyBrowser] = await spec.build({browser: 'chrome-mac', protocol: 'wd'})
+      await browser.url(url)
+
+      extractHostName({expected: 'ondemand.us-west-1.saucelabs.com'})
     })
   })
 
@@ -562,6 +578,13 @@ describe('spec driver', async () => {
       assert.ok(await equalElements(browser, element, (expected as any)[index]))
     }
   }
+  async function setElementText({input}: {input: {element: Applitools.WebdriverIO.Element; text: string}}) {
+    const element = await browser.$(input.element)
+    await element.setValue('bla bla')
+    await spec.setElementText(browser, input.element, input.text)
+    const text = await element.getValue()
+    assert.strictEqual(text, input.text)
+  }
   async function getWindowSize({legacy = false} = {}) {
     let size
     if (legacy) {
@@ -630,5 +653,9 @@ describe('spec driver', async () => {
     const actual = await browser.getUrl()
     assert.deepStrictEqual(actual, blank)
     await browser.url(url)
+  }
+  function extractHostName({expected}: {expected: string}) {
+    const driverUrl = spec.extractHostName(browser)
+    assert.strictEqual(driverUrl, expected)
   }
 })

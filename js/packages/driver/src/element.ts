@@ -45,9 +45,9 @@ export class Element<TDriver, TContext, TElement, TSelector> {
     if (options.context) this._context = options.context
     if (options.logger) this._logger = options.logger
 
-    if (this._spec.isElement(options.element)) {
-      this._target = this._spec.transformElement?.(options.element) ?? options.element
+    this._target = this._spec.transformElement?.(options.element) ?? options.element
 
+    if (this._spec.isElement(this._target)) {
       // Some frameworks contains information about the selector inside an element
       this._selector = options.selector ?? this._spec.extractSelector?.(options.element)
       this._index = options.index
@@ -120,17 +120,7 @@ export class Element<TDriver, TContext, TElement, TSelector> {
         // appium doesn't have a way to check if an element is contained in another element, so juristic applied
         if (await this.equals(innerElement)) return false
         // if the inner element region is contained in this element region, then it then could be assumed that the inner element is contained in this element
-        let contentRegion = await this.driver.helper?.getContentRegion(this)
-        if (!contentRegion || !this.driver.isAndroid) {
-          const nativeContentRegion = await this.getContentSizeFromAttribute()
-          contentRegion = {
-            x: nativeContentRegion.x,
-            y: nativeContentRegion.y,
-            width: Math.max(contentRegion?.width ?? 0, nativeContentRegion.width),
-            height: Math.max(contentRegion?.height ?? 0, nativeContentRegion.height),
-          }
-        }
-
+        const contentRegion = await this.getContentRegion()
         const innerRegion = await this._spec.getElementRegion(this.driver.target, innerElement)
         const contains = utils.geometry.contains(contentRegion, innerRegion)
         this._state.containedElements ??= new Map()
@@ -190,36 +180,71 @@ export class Element<TDriver, TContext, TElement, TSelector> {
     return region
   }
 
-  async getContentSizeFromAttribute() {
-    try {
-      const data = await this.getAttribute('contentSize')
-      const contentSize = JSON.parse(data)
-      return {
-        x: contentSize.left,
-        y: contentSize.top,
-        width: contentSize.width,
-        height: this.driver.isIOS
-          ? Math.max(contentSize.height, contentSize.scrollableOffset)
-          : contentSize.height + contentSize.scrollableOffset,
+  async getContentRegion(
+    options: {lazyLoad?: {scrollLength?: number; waitingTime?: number; maxAmountToScroll?: number}} = {},
+  ) {
+    if (!this.driver.isNative) return
+    this._logger.log('Extracting content region of native element with selector', this.selector)
+    let contentRegion = await this.driver.helper?.getContentRegion(this, options)
+    this._logger.log('Extracted content region using helper library', contentRegion)
+
+    if (!contentRegion || !this.driver.isAndroid) {
+      let attrContentRegion: Region
+      try {
+        const size = JSON.parse(await this.getAttribute('contentSize'))
+        attrContentRegion = {
+          x: size.left,
+          y: size.top,
+          width: size.width,
+          height: this.driver.isIOS
+            ? Math.max(size.height, size.scrollableOffset)
+            : size.height + size.scrollableOffset,
+        }
+      } catch (err) {
+        this._logger.warn(`Unable to get the attribute 'contentSize' due to the following error: '${err.message}'`)
       }
-    } catch (err) {
-      this._logger.warn(`Unable to get the attribute 'contentSize' due to the following error: '${err.message}'`)
-    }
-    if (this.driver.isIOS) {
-      const type = await this.getAttribute('type')
-      if (type === 'XCUIElementTypeScrollView') {
-        const elementRegion = await this._spec.getElementRegion(this.driver.target, this.target)
-        const [childElement] = await this.driver.elements({
-          type: 'xpath',
-          selector: '//XCUIElementTypeScrollView[1]/*', // We cannot be sure that our element is the first one
-        })
-        const childElementRegion = await this._spec.getElementRegion(this.driver.target, childElement.target)
-        return {
-          ...elementRegion,
-          height: childElementRegion.y + childElementRegion.height - elementRegion.y,
+      this._logger.log('Extracted content region using attribute', attrContentRegion)
+
+      // ios workaround
+      if (!attrContentRegion && this.driver.isIOS) {
+        try {
+          const type = await this.getAttribute('type')
+          if (type === 'XCUIElementTypeScrollView') {
+            const [child] = await this.driver.elements({
+              type: 'xpath',
+              selector: '//XCUIElementTypeScrollView[1]/*', // We cannot be sure that our element is the first one
+            })
+            if (child) {
+              const region = await this._spec.getElementRegion(this.driver.target, this.target)
+              const childRegion = await this._spec.getElementRegion(this.driver.target, child.target)
+              attrContentRegion = {
+                ...region,
+                height: childRegion.y + childRegion.height - region.y,
+              }
+            }
+          }
+        } catch (err) {
+          this._logger.warn(
+            `Unable to calculate content region using iOS workaround due to the following error: '${err.message}'`,
+          )
+        }
+        this._logger.log('Extracted content region using iOS workaround', attrContentRegion)
+      }
+
+      if (attrContentRegion) {
+        contentRegion = {
+          x: attrContentRegion.x,
+          y: attrContentRegion.y,
+          width: Math.max(contentRegion?.width ?? 0, attrContentRegion.width),
+          height: Math.max(contentRegion?.height ?? 0, attrContentRegion.height),
         }
       }
     }
+
+    return contentRegion ?? (await this._spec.getElementRegion(this.driver.target, this.target))
+  }
+
+  async getContentSizeIOS() {
     return this._spec.getElementRegion(this.driver.target, this.target)
   }
 
@@ -235,31 +260,14 @@ export class Element<TDriver, TContext, TElement, TSelector> {
       } else {
         this._logger.log('Extracting content size of native element with selector', this.selector)
         try {
-          let contentRegion = await this.driver.helper?.getContentRegion(this, options)
-          this._logger.log('Extracted native content region using helper library', contentRegion)
-
-          // on android extraction of this argument will perform non-deterministic touch action, so it is better to avoid it
-          if (!contentRegion || !this.driver.isAndroid) {
-            const attrContentRegion = await this.getContentSizeFromAttribute()
-            this._logger.log('Extracted native content region using attribute', attrContentRegion)
-            contentRegion = {
-              x: attrContentRegion.x,
-              y: attrContentRegion.y,
-              width: Math.max(contentRegion?.width ?? 0, attrContentRegion.width),
-              height: Math.max(contentRegion?.height ?? 0, attrContentRegion.height),
-            }
-          }
-
+          const contentRegion = await this.getContentRegion(options)
           this._state.contentSize = utils.geometry.size(contentRegion)
-
           if (this.driver.isAndroid) {
             this._state.contentSize = utils.geometry.scale(this._state.contentSize, 1 / this.driver.pixelRatio)
           }
-
           if (contentRegion.y < this.driver.statusBarSize) {
             this._state.contentSize.height -= this.driver.statusBarSize - contentRegion.y
           }
-
           return this._state.contentSize
         } catch (err) {
           this._logger.warn('Failed to extract content size, extracting client size instead')
@@ -353,7 +361,7 @@ export class Element<TDriver, TContext, TElement, TSelector> {
         return ''
       } else {
         this._logger.log('Extracting text of native element with selector', this.selector)
-        return this._spec.getElementText(this.driver.target, this.target)
+        return this._spec.getElementText(this.context.target, this.target)
       }
     })
     this._logger.log('Extracted element text', text)
@@ -404,6 +412,7 @@ export class Element<TDriver, TContext, TElement, TSelector> {
 
   async scrollTo(offset: Location, options?: {force: boolean}): Promise<Location> {
     return this.withRefresh(async () => {
+      this._logger.log(`Scrolling to offset (${offset.x}, ${offset.y}) element with selector`, this.selector)
       offset = utils.geometry.round({x: Math.max(offset.x, 0), y: Math.max(offset.y, 0)})
       if (this.driver.isWeb) {
         let actualOffset = await this.context.execute(snippets.scrollTo, [this, offset])
@@ -499,7 +508,7 @@ export class Element<TDriver, TContext, TElement, TSelector> {
         }
 
         // vertical scrolling
-        const yPadding = Math.max(Math.floor(effectiveRegion.height * 0.05), touchPadding + 3)
+        const yPadding = Math.max(Math.floor(effectiveRegion.height * 0.08), touchPadding + 3)
         const xTrack = Math.floor(effectiveRegion.x + 5) // a little bit off left border
         const yBottom = effectiveRegion.y + effectiveRegion.height - yPadding
         const yDirection = remainingOffset.y > 0 ? 'down' : 'up'
@@ -559,7 +568,7 @@ export class Element<TDriver, TContext, TElement, TSelector> {
             await this._spec.performAction(this.driver.target, action)
           }
         } else if (actions.length > 0) {
-          await this._spec.performAction(this.driver.target, [].concat(...actions))
+          await this._spec.performAction(this.driver.target, actions.flat())
         }
 
         const actualScrollableRegion = await this.getClientRegion()
@@ -612,17 +621,14 @@ export class Element<TDriver, TContext, TElement, TSelector> {
 
   async type(value: string): Promise<void> {
     this._logger.log(`Typing text "${value}" in element with selector`, this.selector)
-    await this._spec.type(this.context.target, this.target, value)
+    await this._spec.setElementText(this.context.target, this.target, value)
   }
 
   async preserveState(): Promise<ElementState<TElement>> {
-    if (this.driver.isNative) return
-    // TODO create single js snippet
     const scrollOffset = await this.getScrollOffset()
-    const transforms = await this.context.execute(snippets.getElementStyleProperties, [
-      this,
-      ['transform', '-webkit-transform'],
-    ])
+    const transforms = this.driver.isWeb
+      ? await this.context.execute(snippets.getElementStyleProperties, [this, ['transform', '-webkit-transform']])
+      : null
     if (!utils.types.has(this._state, ['scrollOffset', 'transforms'])) {
       this._state.scrollOffset = scrollOffset
       this._state.transforms = transforms
@@ -631,7 +637,6 @@ export class Element<TDriver, TContext, TElement, TSelector> {
   }
 
   async restoreState(state: ElementState<TElement> = this._state): Promise<void> {
-    if (this.driver.isNative) return
     if (state.scrollOffset) await this.scrollTo(state.scrollOffset)
     if (state.transforms) await this.context.execute(snippets.setElementStyleProperties, [this, state.transforms])
     if (state === this._state) {

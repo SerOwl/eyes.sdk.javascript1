@@ -1,26 +1,34 @@
-import type {Target, Config, CheckSettings, CheckResult} from './types'
-import type {Eyes as ClassicEyes} from './classic/types'
-import type {Eyes as UFGEyes} from './ufg/types'
+import type {Target, Eyes, Config, CheckSettings, CheckResult} from './types'
 import {type Logger} from '@applitools/logger'
+import {makeDriver, isDriver, type SpecDriver} from '@applitools/driver'
 import * as utils from '@applitools/utils'
 import chalk from 'chalk'
 
-type Options<TDriver, TElement, TSelector> = {
-  eyes: ClassicEyes<TDriver, TElement, TSelector> | UFGEyes<TDriver, TElement, TSelector>
+type Options<TDriver, TContext, TElement, TSelector, TType extends 'classic' | 'ufg'> = {
+  type?: TType
+  eyes: Eyes<TDriver, TContext, TElement, TSelector, TType>
+  target?: Target<TDriver, TContext, TElement, TSelector, TType>
+  spec?: SpecDriver<TDriver, TContext, TElement, TSelector>
   logger?: Logger
 }
 
-export function makeCheck<TDriver, TElement, TSelector, TType extends 'classic' | 'ufg'>({
+export function makeCheck<TDriver, TContext, TElement, TSelector, TDefaultType extends 'classic' | 'ufg' = 'classic'>({
+  type: defaultType,
   eyes,
+  target: defaultTarget,
+  spec,
   logger: defaultLogger,
-}: Options<TDriver, TElement, TSelector>) {
-  return async function check({
-    target,
-    settings = {},
+}: Options<TDriver, TContext, TElement, TSelector, TDefaultType>) {
+  let stepIndex = 0
+  return async function check<TType extends 'classic' | 'ufg' = TDefaultType>({
+    type = defaultType as any,
+    target = defaultTarget as any,
+    settings,
     config,
     logger = defaultLogger,
   }: {
-    target?: Target<TDriver, TType>
+    type?: TType
+    target?: Target<TDriver, TContext, TElement, TSelector, TType>
     settings?: CheckSettings<TElement, TSelector, TType>
     config?: Config<TElement, TSelector, TType>
     logger?: Logger
@@ -31,7 +39,7 @@ export function makeCheck<TDriver, TElement, TSelector, TType extends 'classic' 
     settings.stitchMode ??= 'Scroll'
     settings.hideScrollbars ??= true
     settings.hideCaret ??= true
-    settings.overlap ??= {top: 10, bottom: 50}
+    settings.overlap = {top: 10, bottom: 50, ...settings?.overlap}
     settings.matchLevel ??= 'Strict'
     settings.ignoreCaret ??= true
     settings.sendDom ??=
@@ -45,13 +53,23 @@ export function makeCheck<TDriver, TElement, TSelector, TType extends 'classic' 
       settings.lazyLoad.waitingTime ??= 2000
       settings.lazyLoad.maxAmountToScroll ??= 15000
     }
+    settings.stepIndex = stepIndex++
     settings.waitBetweenStitches ??= utils.types.isObject(settings.lazyLoad) ? settings.lazyLoad.waitingTime : 100
 
     if (settings.matchLevel === 'Content') {
       logger.console.log(chalk.yellow(`The "Content" match level value has been deprecated, use "IgnoreColors" instead.`))
     }
 
-    const results = await eyes.check({target: target as any, settings, logger})
+    const driver = isDriver(target, spec) ? await makeDriver({spec, driver: target, logger}) : null
+    const typedEyes = await eyes.getTypedEyes({
+      type,
+      settings: driver && {
+        type: driver.isNative ? 'native' : 'web',
+        renderers: (settings as CheckSettings<TElement, TSelector, 'ufg'>).renderers,
+      },
+      logger,
+    })
+    const results = await typedEyes.check({target: driver ?? target, settings, logger})
     return results
   }
 }

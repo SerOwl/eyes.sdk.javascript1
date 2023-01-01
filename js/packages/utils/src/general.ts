@@ -60,12 +60,15 @@ export function toJSON<TObject extends Record<PropertyKey, any>>(
     : TObject[key]
 }
 export function toJSON(object: Record<PropertyKey, any>, props?: string[] | Record<string, PropertyKey>) {
-  if (!types.isObject(object)) return null
+  if (!types.isObject(object)) return object
+  if (types.isArray(object)) {
+    return object.map(value => (value && types.isFunction(value.toJSON) ? value.toJSON() : toJSON(value)))
+  }
   const original = props ? Object.values(props) : Object.keys(object)
   const keys = !props || types.isArray(props) ? original : Object.keys(props)
   return keys.reduce((plain: any, key, index) => {
     const value = object[original[index] as string]
-    plain[key] = value && types.isFunction(value.toJSON) ? value.toJSON() : value
+    plain[key] = value && types.isFunction(value.toJSON) ? value.toJSON() : toJSON(value)
     return plain
   }, {})
 }
@@ -99,20 +102,36 @@ export function absolutizeUrl(url: string, baseUrl: string): string {
 export function cachify<TFunc extends (...args: any[]) => any>(
   func: TFunc,
   getKey?: (args: Parameters<TFunc>) => any,
-): TFunc & {clearCache(): void; getCachedValues(): ReturnType<TFunc>[]} {
+): TFunc & {
+  getCachedValues(): ReturnType<TFunc>[]
+  setCachedValue(key: any, value: ReturnType<TFunc>): void
+  clearCache(): void
+} {
   const cache = new Map<string, ReturnType<TFunc>>()
   const funcWithCache = ((...args: Parameters<TFunc>) => {
-    const key = JSON.stringify(getKey?.(args) ?? args, (_, t) => (typeof t === 'function' ? t.toString() : t))
+    const key = stringifyKey(getKey?.(args) ?? args)
     let value = cache.get(key)
     if (!value) {
       value = func(...args)
       cache.set(key, value)
     }
     return value
-  }) as TFunc & {clearCache(): void; getCachedValues(): ReturnType<TFunc>[]}
+  }) as TFunc & {
+    getCachedValues(): ReturnType<TFunc>[]
+    setCachedValue(key: any, value: Awaited<ReturnType<TFunc>>): void
+    clearCache(): void
+  }
   funcWithCache.clearCache = () => cache.clear()
   funcWithCache.getCachedValues = () => Array.from(cache.values())
+  funcWithCache.setCachedValue = (key, value) => cache.set(stringifyKey(key), value)
   return funcWithCache
+
+  function stringifyKey(key: any): string {
+    key = types.isPlainObject(key)
+      ? Object.fromEntries(Object.entries(key).sort(([key1], [key2]) => (key1 > key2 ? 1 : -1)))
+      : key
+    return JSON.stringify(key, (_key, value) => (typeof value === 'function' ? value.toString() : value))
+  }
 }
 
 export function batchify<
@@ -146,11 +165,12 @@ export function wrap<TFunc extends (...args: any[]) => any>(
 
 export function extend<TTarget extends Record<PropertyKey, any>, TExtension extends Record<PropertyKey, any>>(
   target: TTarget,
-  extension: TExtension,
+  extension: TExtension | ((result: any) => TExtension),
 ): TTarget & TExtension {
-  return Object.defineProperties({} as any, {
+  const result = {} as any
+  return Object.defineProperties(result, {
     ...Object.getOwnPropertyDescriptors(target),
-    ...Object.getOwnPropertyDescriptors(extension),
+    ...Object.getOwnPropertyDescriptors(types.isFunction(extension) ? extension(result) : extension),
   })
 }
 

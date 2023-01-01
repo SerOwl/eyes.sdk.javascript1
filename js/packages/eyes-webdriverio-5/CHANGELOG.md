@@ -10,6 +10,26 @@
 
 
 
+## 5.39.0 - 2022/12/21
+
+### Features
+- Added `nmgOptions` to `CheckSettings`
+### Bug fixes
+- Handle fake shadowRoot with UFG
+- Handed error during polling in long requests to eyes server
+
+## 5.38.2 - 2022/12/1
+
+### Features
+### Bug fixes
+- Fixed issue with element scroll position not being restored after screenshot is taken on native platforms
+
+## 5.38.1 - 2022/11/29
+
+### Features
+- Added `ignoreColors` method to `CheckSettings` to set a match level
+### Bug fixes
+
 ## 5.38.0 - 2022/11/17
 
 ### Features

@@ -1,5 +1,5 @@
 import {takeScreenshot, takeSnapshots} from '../../src/client'
-import {testProxyServer} from '@applitools/test-server'
+import {makeProxyServer} from '@applitools/test-server'
 import * as spec from '@applitools/spec-driver-selenium'
 import assert from 'assert'
 
@@ -9,7 +9,7 @@ const env = {
   //  app: 'https://applitools.jfrog.io/artifactory/Examples/duckduckgo-5.87.0-play-debug.apk',
   //},
   ios: {
-    device: 'iPhone 12',
+    device: 'iPhone 13',
     app: 'https://applitools.jfrog.io/artifactory/Examples/IOSTestApp-instrumented-nml-nmg-flat-caps.zip',
     injectUFGLib: true,
     withNML: true,
@@ -67,7 +67,7 @@ describe('client', () => {
         let proxyServer
         const [driver, destroyDriver] = await spec.build(env[platform])
         try {
-          proxyServer = await testProxyServer()
+          proxyServer = await makeProxyServer()
           const brokerUrl = await extractBrokerUrl(driver)
           const snapshots = await takeSnapshots({
             url: brokerUrl,

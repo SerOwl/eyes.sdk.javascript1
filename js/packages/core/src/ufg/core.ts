@@ -29,7 +29,7 @@ export function makeCore<TDriver, TContext, TElement, TSelector>({
   agentId = 'core-ufg',
   cwd = process.cwd(),
   logger,
-}: Options<TDriver, TContext, TElement, TSelector>): Core<TDriver, TElement, TSelector> {
+}: Options<TDriver, TContext, TElement, TSelector>): Core<TDriver, TContext, TElement, TSelector> {
   logger = logger?.extend({label: 'core-ufg'}) ?? makeLogger({label: 'core-ufg'})
   logger.log(`Core ufg is initialized ${core ? 'with' : 'without'} custom base core`)
 
@@ -49,6 +49,10 @@ export function makeCore<TDriver, TContext, TElement, TSelector>({
                 close: utils.general.wrap(eyes.close, (close, options) => close(options).finally(done)),
                 // release concurrency slot when aborted
                 abort: utils.general.wrap(eyes.abort, (abort, options) => abort(options).finally(done)),
+                // release concurrency slot when checkAndClose is done
+                checkAndClose: utils.general.wrap(eyes.checkAndClose, (checkAndClose, options) =>
+                  checkAndClose(options).finally(done),
+                ),
               }),
             )
           } catch (error) {

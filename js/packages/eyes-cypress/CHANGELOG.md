@@ -11,6 +11,21 @@
 
 
 
+
+## 3.28.0 - 2022/12/28
+
+### Features
+- Support `strictNullChecks` in TypeScript configuration, by wrapping relevant types with NonNullable
+### Bug fixes
+
+## 3.27.9 - 2022/12/21
+
+### Features
+- Additional internal event logs
+### Bug fixes
+- Handle fake shadowRoot with UFG
+- Handed error during polling in long requests to eyes server
+
 ## 3.27.8 - 2022/11/19
 
 ### Features

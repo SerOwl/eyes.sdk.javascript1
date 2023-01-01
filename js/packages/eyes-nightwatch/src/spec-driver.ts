@@ -1,101 +1,113 @@
-import type {Size} from '@applitools/utils'
-import {type Cookie, type DriverInfo} from '@applitools/driver'
+import type * as Selenium from 'selenium-webdriver'
 import type * as Nightwatch from 'nightwatch'
+import * as spec from '@applitools/spec-driver-webdriver'
 import * as utils from '@applitools/utils'
 
-export type Driver = Nightwatch.NightwatchAPI & {__applitoolsBrand?: never}
-export type Element = (
-  | {ELEMENT: string}
-  | {'element-6066-11e4-a52e-4f735466cecf': string}
-  | Nightwatch.NightwatchTypedCallbackResult<{ELEMENT: string} | {'element-6066-11e4-a52e-4f735466cecf': string}>
-) & {__applitoolsBrand?: never}
-export type Selector = {locateStrategy: Nightwatch.LocateStrategy; selector: string} & {__applitoolsBrand?: never}
+export * from '@applitools/spec-driver-webdriver'
 
-type ShadowRoot = {'shadow-6066-11e4-a52e-4f735466cecf': string} | {getId: () => string}
+type ApplitoolsBrand = {__applitoolsBrand?: never}
+
+export type WDDriver = spec.Driver
+export type WDElement = spec.Element
+export type WDShadowRoot = spec.ShadowRoot
+export type WDSelector = spec.Selector
+
+export type Driver = Nightwatch.NightwatchBrowser & ApplitoolsBrand
+export type Element = WDElement & ApplitoolsBrand
+export type ShadowRoot = ({id_: string} | WDShadowRoot) & ApplitoolsBrand
+export type Selector = (Nightwatch.ElementProperties | string | Selenium.Locator) & ApplitoolsBrand
+
+export type ResponseElement = Nightwatch.NightwatchTypedCallbackResult<WDElement> & ApplitoolsBrand
+
 type CommonSelector<TSelector = never> = string | {selector: TSelector | string; type?: string}
 
-// #region HELPERS
-
-const LEGACY_ELEMENT_ID = 'ELEMENT'
+const byHash = ['className', 'css', 'id', 'js', 'linkText', 'name', 'partialLinkText', 'tagName', 'xpath'] as const
+function isByHashSelector(selector: any): selector is Selenium.ByHash {
+  return byHash.includes(Object.keys(selector)[0] as typeof byHash[number])
+}
 const SHADOW_ROOT_ID = 'shadow-6066-11e4-a52e-4f735466cecf'
-const ELEMENT_ID = 'element-6066-11e4-a52e-4f735466cecf'
-
-function extractElementId(element: Element | ShadowRoot): string {
-  if (utils.types.has(element, ELEMENT_ID)) return element[ELEMENT_ID]
-  else if (utils.types.has(element, LEGACY_ELEMENT_ID)) return element[LEGACY_ELEMENT_ID]
-  else if (utils.types.has(element, SHADOW_ROOT_ID)) return element[SHADOW_ROOT_ID]
-  else if (utils.types.has(element, 'getId')) return element.getId()
+function extractShadowRootId(shadowRoot: ShadowRoot): string {
+  return (
+    (shadowRoot as {'shadow-6066-11e4-a52e-4f735466cecf': string})[SHADOW_ROOT_ID] ?? (shadowRoot as {id_: string}).id_
+  )
 }
-function call<
-  TCommand extends keyof {
-    [TCommand in keyof Driver as Driver[TCommand] extends (...args: [...infer TArgs, (...args: any[]) => any]) => any
-      ? TCommand
-      : never]: void
-  },
-  TResult = Driver[TCommand] extends (
-    ...args: [...infer TArgs, (result: Nightwatch.NightwatchCallbackResult<infer TResult>) => any]
-  ) => any
-    ? TResult
-    : void,
->(driver: Driver, command: TCommand, ...args: any[]): Promise<TResult> {
-  return new Promise<TResult>((resolve, reject) => {
-    const promise = (driver[command] as any)(...args, (result: Nightwatch.NightwatchCallbackResult<TResult>) => {
-      if (!result) reject(new Error('Got empty result'))
-      if (!('value' in result) && !(result as any).error) resolve(result as any)
-      else if (!result.status && !(result as any).error) resolve(result.value as TResult)
-      else reject(result.value || (result as any).error)
-    })
-    if (
-      (process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION === '1' || command === 'moveTo') &&
-      promise instanceof Promise
-    ) {
-      promise.then(resolve, reject)
-    }
-  })
+function transformShadowRoot(shadowRoot: ShadowRoot): WDShadowRoot {
+  return {[SHADOW_ROOT_ID]: extractShadowRootId(shadowRoot)}
 }
-// }
-
-// #endregion
-
-// #region UTILITY
-
-export function isDriver(driver: any): driver is Driver {
-  return utils.types.instanceOf(driver, 'NightwatchAPI')
+const XPATH_SELECTOR_START = ['/', '(', '../', './', '*/']
+function isXpathSelector(selector: string): boolean {
+  return XPATH_SELECTOR_START.some(start => selector.startsWith(start))
 }
-export function isElement(element: any): element is Element {
-  if (!element || element.error) return false
-  return Boolean(extractElementId(element.value || element))
+
+export function isDriver(driver: any): driver is Driver | WDDriver {
+  return spec.isDriver(driver) || utils.types.instanceOf(driver, 'NightwatchAPI')
 }
-export function isSelector(selector: any): selector is Selector {
+export function isElement(element: any): element is Element | WDElement {
+  return spec.isElement(element)
+}
+export function isShadowRoot(shadowRoot: any): shadowRoot is ShadowRoot {
+  if (!shadowRoot) return false
+  return spec.isShadowRoot(shadowRoot) || Boolean(extractShadowRootId(shadowRoot))
+}
+export function isSelector(selector: any): selector is Selector | WDSelector {
   if (!selector) return false
-  return utils.types.has(selector, ['locateStrategy', 'selector'])
+  return (
+    spec.isSelector(selector) ||
+    utils.types.isString(selector) ||
+    (utils.types.has(selector, 'selector') && utils.types.isString(selector.selector)) ||
+    isByHashSelector(selector) ||
+    utils.types.isFunction(selector) ||
+    utils.types.instanceOf<Selenium.RelativeBy>(selector, 'RelativeBy')
+  )
 }
-export function transformDriver(driver: Driver): Driver {
-  return new Proxy(driver, {
-    get(target, key) {
-      if (key === 'then') return undefined
-      return Reflect.get(target, key)
-    },
-  })
+export function transformDriver(driver: Driver): WDDriver {
+  if (spec.isDriver(driver)) return driver
+  const selenium = (driver.options as any).selenium
+  const webdriver = (driver.options as any).webdriver
+  const ssl = selenium?.ssl ?? webdriver?.ssl
+  const hostname = selenium?.host ?? webdriver?.host
+  const port = selenium?.port ?? webdriver?.port
+  const path = selenium?.default_path_prefix ?? webdriver?.default_path_prefix
+  const transformedDriver = spec.transformDriver({
+    sessionId: driver.sessionId,
+    serverUrl: `http${ssl ? 's' : ''}://${hostname ?? 'localhost'}${port ? `:${port}` : ''}${path}`,
+    capabilities: (driver as any).capabilities,
+  }) as spec.Driver
+  transformedDriver.original = driver
+  return transformedDriver
 }
-export function transformElement(element: Element): Element {
-  const elementId = extractElementId(utils.types.has(element, 'value') ? element.value : element)
-  return {[ELEMENT_ID]: elementId, [LEGACY_ELEMENT_ID]: elementId}
+export function transformElement(element: Element | ResponseElement): Element {
+  return utils.types.has(element, 'value') ? spec.transformElement(element.value) : spec.transformElement(element)
 }
 export function transformSelector(selector: CommonSelector<Selector>): Selector {
   if (utils.types.isString(selector)) {
-    return {locateStrategy: 'css selector', selector}
+    return {locateStrategy: isXpathSelector(selector) ? 'xpath' : 'css selector', selector}
   } else if (utils.types.has(selector, 'selector')) {
-    if (utils.types.has(selector, 'locateStrategy')) return selector as Selector
     if (!utils.types.isString(selector.selector)) return selector.selector
-    if (!utils.types.has(selector, 'type')) return {locateStrategy: 'css selector', selector: selector.selector}
+    if (!utils.types.has(selector, 'type')) {
+      return {
+        locateStrategy: isXpathSelector(selector.selector) ? 'xpath' : 'css selector',
+        selector: selector.selector,
+      }
+    }
     if (selector.type === 'css') return {locateStrategy: 'css selector', selector: selector.selector}
     else return {locateStrategy: selector.type as Nightwatch.LocateStrategy, selector: selector.selector}
   }
   return selector
 }
-export function untransformSelector(selector: Selector): CommonSelector {
-  if (utils.types.has(selector, ['locateStrategy', 'selector'])) {
+export function untransformSelector(selector: Selector): CommonSelector | null {
+  if (utils.types.instanceOf<Selenium.RelativeBy>(selector, 'RelativeBy') || utils.types.isFunction(selector)) {
+    return null
+  } else if (isByHashSelector(selector)) {
+    const [[how, what]] = Object.entries(selector) as [[typeof byHash[number], string]]
+    if (how === 'js') return null
+    const Selenium = require('selenium-webdriver')
+    selector = Selenium.By[how](what) as Selenium.By
+  }
+  if (utils.types.has(selector, ['using', 'value'])) {
+    selector = {locateStrategy: selector.using as Nightwatch.LocateStrategy, selector: selector.value}
+  }
+  if (utils.types.has(selector, 'selector') && selector.locateStrategy) {
     return {
       type: selector.locateStrategy === 'css selector' ? 'css' : selector.locateStrategy,
       selector: selector.selector,
@@ -103,217 +115,103 @@ export function untransformSelector(selector: Selector): CommonSelector {
   }
   return selector
 }
-export function isStaleElementError(err: any): boolean {
-  if (!err) return false
-  const error = err.originalError || err
-  const message = error && error.message
-  return message && (message.includes('stale element reference') || message.includes('is stale'))
-}
-export async function isEqualElements(_driver: Driver, element1: Element, element2: Element): Promise<boolean> {
-  if (!element1 || !element2) return false
-  const elementId1 = extractElementId(element1)
-  const elementId2 = extractElementId(element2)
-  return elementId1 === elementId2
-}
-
-// #endregion
-
-// #region COMMANDS
-
-export async function executeScript(driver: Driver, script: ((arg: any) => any) | string, arg: any): Promise<any> {
-  return call(driver, 'execute', script, [arg])
-}
-export async function mainContext(driver: Driver): Promise<Driver> {
-  await call(driver, 'frame')
-  return driver
-}
-export async function parentContext(driver: Driver): Promise<Driver> {
-  await call(driver, 'frameParent')
-  return driver
-}
-export async function childContext(driver: Driver, element: Element): Promise<Driver> {
-  await call(driver, 'frame', element)
-  return driver
-}
-export async function findElement(driver: Driver, selector: Selector, parent?: Element): Promise<Element> {
-  try {
-    return parent
-      ? await call(driver, 'elementIdElement', extractElementId(parent), selector.locateStrategy, selector.selector)
-      : await call(driver, 'element', selector.locateStrategy, selector.selector)
-  } catch {
-    return null
-  }
-}
-export async function findElements(driver: Driver, selector: Selector, parent?: Element): Promise<Element[]> {
-  return parent
-    ? await call(driver, 'elementIdElements', extractElementId(parent), selector.locateStrategy, selector.selector)
-    : await call(driver, 'elements', selector.locateStrategy, selector.selector)
-}
-export async function getWindowSize(driver: Driver): Promise<Size> {
-  // NOTE:
-  // https://github.com/nightwatchjs/nightwatch/blob/fd4aff1e2cc3e691a82e61c7e550fb088ee47d5a/lib/transport/jsonwire/actions.js#L165-L167
-  // getWindowRect is implemented on JWP drivers even though it won't work
-  // So we need to catch and retry a window size command that will work on JWP
-  try {
-    const rect = (await call(driver, 'getWindowRect' as any)) as any
-    return {width: rect.width, height: rect.height}
-  } catch {
-    return call(driver, 'getWindowSize' as 'windowSize')
-  }
-}
-export async function setWindowSize(driver: Driver, size: Size): Promise<void> {
-  // NOTE:
-  // Same deal as with getWindowSize. If running on JWP, need to catch and retry
-  // with a different command.
-  try {
-    if (process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION === '1') {
-      await call(driver, 'setWindowRect' as any, size)
-    } else {
-      // calling setWindowRect without a callback above version 1, as the callback is called before the command finishes.
-      await driver.setWindowRect(size as any)
-    }
-  } catch {
-    if (process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION === '1') {
-      await call(driver, 'setWindowPosition' as 'windowPosition', 0, 0)
-      await call(driver, 'setWindowSize' as 'windowSize', size.width, size.height)
-    } else {
-      await driver.setWindowPosition(0, 0)
-      await driver.setWindowSize(size.width, size.height)
+export async function findElement(
+  driver: WDDriver,
+  selector: Selector,
+  parent?: WDElement | WDShadowRoot | ShadowRoot,
+): Promise<WDElement | null> {
+  const originalDriver = driver.original as Driver
+  let element = null as Element | null
+  if (utils.types.has(selector, 'selector') && selector.locateStrategy && !selector.index) {
+    parent = isShadowRoot(parent) ? transformShadowRoot(parent) : parent
+    element = await spec.findElement(driver, {using: selector.locateStrategy, value: selector.selector}, parent)
+  } else if (!(Number(process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION) < 2)) {
+    try {
+      element = await originalDriver.findElement(selector as any)
+    } catch {
+      element = null
     }
   }
+  return spec.isElement(element) ? spec.transformElement(element) : null
 }
-export async function getCookies(driver: Driver, context?: boolean): Promise<Cookie[]> {
-  if (context) return call(driver, 'getCookies')
-  return []
-}
-export async function getCapabilities(driver: Driver): Promise<Record<string, any>> {
-  try {
-    const session = await call(driver, 'session')
-    if (process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION === '1') {
-      return session
-    } else {
-      const capabilities = session.getCapabilities()
-      const mapIterator = capabilities.keys()
-      const caps = {} as any
-
-      for (const cap of mapIterator) {
-        caps[cap] = capabilities.get(cap)
-      }
-      return caps
+export async function findElements(
+  driver: WDDriver,
+  selector: Selector,
+  parent?: WDElement | WDShadowRoot | ShadowRoot,
+): Promise<WDElement[]> {
+  const originalDriver = driver.original as Driver
+  let elements = [] as Element[]
+  if (utils.types.has(selector, 'selector') && selector.locateStrategy && !selector.index) {
+    parent = isShadowRoot(parent) ? transformShadowRoot(parent) : parent
+    elements = await spec.findElements(driver, {using: selector.locateStrategy, value: selector.selector}, parent)
+  } else if (!(Number(process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION) < 2)) {
+    try {
+      elements = await originalDriver.findElements(selector as any)
+    } catch {
+      elements = []
     }
-  } catch {
-    return driver.options.desiredCapabilities
   }
+  return utils.types.isArray(elements) ? elements : []
 }
-export async function getDriverInfo(driver: Driver): Promise<DriverInfo> {
-  return {sessionId: driver.sessionId, features: {allCookies: false}}
-}
-export async function getTitle(driver: Driver): Promise<string> {
-  return call(driver, 'title')
-}
-export async function getUrl(driver: Driver): Promise<string> {
-  return call(driver, 'url')
-}
-export async function visit(driver: Driver, url: string): Promise<void> {
-  return call(driver, 'url', url)
-}
-export async function takeScreenshot(driver: Driver): Promise<string> {
-  // TODO: ask forum about how to track error handling
-  return call(driver, 'screenshot', false)
-}
-export async function click(driver: Driver, element: Element | Selector): Promise<void> {
-  if (isSelector(element)) element = await findElement(driver, element)
-  await call(driver, 'elementIdClick', extractElementId(element))
-}
-export async function hover(driver: Driver, element: Element | Selector): Promise<void> {
-  if (isSelector(element)) element = await findElement(driver, element)
-  await call(driver, 'moveTo', extractElementId(element))
-}
-export async function type(driver: Driver, element: Element | Selector, keys: string): Promise<void> {
-  if (isSelector(element)) element = await findElement(driver, element)
-  await driver.elementIdValue(extractElementId(element), keys)
-}
-export async function scrollIntoView(driver: Driver, element: Element | Selector): Promise<void> {
-  if (isSelector(element)) element = await findElement(driver, element)
-  // NOTE: moveTo will scroll the element into view, but it also moves the mouse
-  // cursor to the element. This might have unintended side effects.
-  // Will need to wait and see, since there's no simple alternative.
-  await call(driver, 'moveTo', extractElementId(element), 0, 0)
-}
-export async function waitUntilDisplayed(driver: Driver, selector: Selector, timeout: number): Promise<void> {
-  await call(driver, 'waitForElementVisible' as any, selector.locateStrategy, selector.selector, timeout)
-}
-
-// #endregion
-
-// #region TESTING
 
 const browserOptionsNames: Record<string, string> = {
   chrome: 'goog:chromeOptions',
   firefox: 'moz:firefoxOptions',
 }
 export async function build(env: any): Promise<[Driver, () => Promise<void>]> {
-  // config prep
+  const Nightwatch = require('nightwatch')
   const parseEnv = require('@applitools/test-utils/src/parse-env')
-  const {browser = '', capabilities, url, configurable = true, args = [], headless} = parseEnv({...env, legacy: true})
-  const desiredCapabilities = {browserName: browser, ...capabilities}
+
+  const {
+    browser = '',
+    capabilities,
+    url,
+    configurable = true,
+    args = [],
+    headless,
+    logLevel = 'silent',
+  } = parseEnv({...env, legacy: env.legacy ?? process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION === '1'})
+  const options: any = {
+    output: logLevel !== 'silent',
+    capabilities: {browserName: browser, ...capabilities},
+    webdriver: {
+      host: url.hostname,
+      port: url.port || (url.protocol.startsWith('https') ? 443 : undefined),
+      default_path_prefix: url.pathname,
+      check_process_delay: 100,
+      max_status_poll_tries: 10,
+      status_poll_interval: 200,
+      process_create_timeout: 120000,
+      start_session: true,
+      start_process: false,
+    },
+    useAsync: true,
+  }
   if (configurable) {
-    const browserOptionsName = browserOptionsNames[browser || desiredCapabilities.browserName]
+    const browserOptionsName = browserOptionsNames[browser || options.capabilities.browserName]
     if (browserOptionsName) {
-      const browserOptions = desiredCapabilities[browserOptionsName] || {}
+      const browserOptions = options.capabilities[browserOptionsName] || {}
       browserOptions.args = [...(browserOptions.args || []), ...args]
       if (headless) browserOptions.args.push('headless')
       if (browser === 'firefox') {
-        desiredCapabilities.alwaysMatch = {[browserOptionsName]: browserOptions}
+        options.capabilities.alwaysMatch = {[browserOptionsName]: browserOptions}
       } else {
-        desiredCapabilities[browserOptionsName] = browserOptions
+        options.capabilities[browserOptionsName] = browserOptions
       }
-      if (browser !== 'firefox' && !browserOptions.mobileEmulation) browserOptions.w3c = false
+      // if (browser !== 'firefox' && !browserOptions.mobileEmulation) browserOptions.w3c = false
     }
   }
-  // needed for mobile native to work in newer versions of nightwatch
-  if (desiredCapabilities.browserName === '') desiredCapabilities.browserName = null
+  if (options.capabilities.browserName === '') options.capabilities.browserName = null
+  if (options.capabilities.browserName !== 'firefox') options.selenium = options.webdriver
 
-  // building
-  const Nightwatch = require('nightwatch')
-  const Settings = require('nightwatch/lib/settings/settings')
-  const settings = Settings.parse(
-    {},
-    {
-      test_settings: {
-        default: {
-          output: false,
-          webdriver: {
-            host: !url.host.includes('localhost') ? url.host : undefined,
-            port: url.port || (url.protocol === 'https:' ? 443 : undefined),
-            default_path_prefix: url.pathname,
-          },
-          desiredCapabilities,
-        },
-      },
-    },
-    {},
-    'default',
-  )
-
-  if (process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION === '1') {
-    const client = Nightwatch.client(settings)
+  if (Number(process.env.APPLITOOLS_NIGHTWATCH_MAJOR_VERSION) < 2) {
+    options.desiredCapabilities = options.capabilities
+    const client = Nightwatch.client(options)
     client.isES6AsyncTestcase = true
     await client.createSession()
     return [client.api, () => client.session.close()]
   } else {
-    // for CheckRegionBySelectorInFrameFullyOnFirefoxLegacy
-    settings.desiredCapabilities.browserName =
-      settings.desiredCapabilities.browserName === 'Firefox'
-        ? settings.desiredCapabilities.browserName.toLowerCase()
-        : settings.desiredCapabilities.browserName
-    settings.selenium = {
-      host: settings.webdriver.host,
-      port: settings.webdriver.port,
-    }
-    const client = Nightwatch.createClient(Object.assign(settings, settings.desiredCapabilities))
-    const driver = await client.launchBrowser()
+    const driver = await Nightwatch.createClient(options).launchBrowser()
     return [driver, () => driver.end()]
   }
 }
-// #endregion

@@ -1,3 +1,7 @@
+## [5.13.1] - 2022-12-06
+### Fixed
+- BatchClose() didn't actually close batches [Trello 3087](https://trello.com/c/wJPpVSsS)
+
 ## [5.13.0] - 2022-11-07
 ### Added
 - eyes-images package functionality implementation based on eyes-universal

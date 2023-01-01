@@ -91,6 +91,7 @@ class BatchInfoTrafaret(trf.Trafaret):
         {
             trf.Key("id", optional=True): trf.String,
             trf.Key("name", optional=True): trf.String,
+            trf.Key("notify_on_completion", optional=True): trf.Bool,
             trf.Key("batch_sequence_name", optional=True)
             >> "sequence_name": trf.String,
             trf.Key("started_at", optional=True): trf.DateTime,
@@ -265,6 +266,7 @@ class ConfigurationTrafaret(trf.Trafaret):  # typedef
             trf.Key("parent_branch_name", optional=True): trf.String,
             trf.Key("baseline_branch_name", optional=True): trf.String,
             trf.Key("baseline_env_name", optional=True): trf.String,
+            trf.Key("dont_close_batches", optional=True): trf.Bool,
             trf.Key("save_diffs", optional=True): trf.Bool,
             trf.Key("app_name", optional=True): trf.String,
             trf.Key("viewport_size", optional=True): ViewPortTrafaret,

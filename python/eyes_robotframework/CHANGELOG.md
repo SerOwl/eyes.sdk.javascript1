@@ -1,3 +1,12 @@
+## [5.11.0] - 2022-12-21
+### Added
+- Configuration option dont_close_batches can now be set in yaml config [Trello 3103](https://trello.com/c/kxOBjjCs)
+
+## [5.10.0] - 2022-12-06
+### Added
+- `Create Batch Info` keyword now accepts optional notify_on_completion argument [Trello 3084](https://trello.com/c/YkjxDWWz)
+- notify_on_completion can be specified in batch section of config [Trello 3084](https://trello.com/c/YkjxDWWz)
+
 ## [5.9.0] - 2022-10-06
 ### Added
 - `Eyes Set NMG Capabilities` keyword to update existing capabilities with NMG params [GH-1124](/../../pull/1124)

@@ -11,6 +11,28 @@
 
 
 
+## 2.18.0 - 2022/12/27
+
+### Features
+- add support for "node14-linux-arm64"
+### Bug fixes
+
+## 2.17.4 - 2022/12/21
+
+### Features
+- Additional internal event logs
+### Bug fixes
+- Fixed issue when helper lib inputs were not cleaned up before calling new command
+- Fixed issue with element scroll position not being restored after screenshot is taken on native platforms
+- Handle fake shadowRoot with UFG
+- Handed error during polling in long requests to eyes server
+
+## 2.17.3 - 2022/11/29
+
+### Features
+### Bug fixes
+- Fixed OCR functionality with latest Eyes server
+
 ## 2.17.2 - 2022/11/16
 
 ### Features

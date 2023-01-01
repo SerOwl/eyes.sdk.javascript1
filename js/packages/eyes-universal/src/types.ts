@@ -55,14 +55,14 @@ interface Server {
   getInfo(): Record<string, any>
 }
 
-type UniversalCore<TDriver, TElement, TSelector> = Omit<
-  Core<TDriver, TElement, TSelector>,
+type UniversalCore<TDriver, TContext, TElement, TSelector> = Omit<
+  Core<TDriver, TContext, TElement, TSelector>,
   'isDriver' | 'isElement' | 'isSelector'
 >
 
-type UniversalEyes<TDriver, TElement, TSelector, TType extends 'classic' | 'ufg'> = Omit<
-  Eyes<TDriver, TElement, TSelector, TType>,
-  'test' | 'running' | 'closed' | 'aborted'
+type UniversalEyes<TDriver, TContext, TElement, TSelector, TType extends 'classic' | 'ufg'> = Omit<
+  Eyes<TDriver, TContext, TElement, TSelector, TType>,
+  'type' | 'test' | 'running' | 'closed' | 'aborted'
 >
 
 // Ideally would be transform SpecDriver type to the type with single object argument
@@ -79,6 +79,8 @@ export interface UniversalSpecDriver<TDriver, TContext, TElement, TSelector> {
   executeScript(options: {context: TContext; script: string; arg?: any}): Promise<any>
   findElement(options: {context: TContext; selector: TSelector; parent?: TElement}): Promise<TElement | null>
   findElements(options: {context: TContext; selector: TSelector; parent?: TElement}): Promise<TElement[]>
+  setElementText?(options: {context: TContext; element: TElement; text: string}): Promise<void>
+  getElementText?(options: {context: TContext; element: TElement}): Promise<string>
   setWindowSize?(options: {driver: TDriver; size: Size}): Promise<void>
   getWindowSize?(options: {driver: TDriver}): Promise<Size>
   setViewportSize?(options: {driver: TDriver; size: Size}): Promise<void>
@@ -90,7 +92,6 @@ export interface UniversalSpecDriver<TDriver, TContext, TElement, TSelector> {
   getUrl(options: {driver: TDriver}): Promise<string>
   takeScreenshot(options: {driver: TDriver}): Promise<string>
   click?(options: {context: TContext; element: TElement | TSelector}): Promise<void>
-  type?(options: {context: TContext; element: TElement; value: string}): Promise<void>
   visit?(options: {driver: TDriver; url: string}): Promise<void>
   // #endregion
 
@@ -108,7 +109,6 @@ export interface UniversalSpecDriver<TDriver, TContext, TElement, TSelector> {
   }>
   getElementRegion?(options: {driver: TDriver; element: TElement}): Promise<Region>
   getElementAttribute?(options: {driver: TDriver; element: TElement; attr: string}): Promise<string>
-  getElementText?(options: {driver: TDriver; element: TElement}): Promise<string>
   performAction?(options: {driver: TDriver; steps: any[]}): Promise<void>
   getCurrentWorld?(options: {driver: TDriver}): Promise<string>
   getWorlds?(options: {driver: TDriver}): Promise<string[]>
@@ -127,17 +127,17 @@ export type Refify<TValue> = TValue extends string | number | boolean | null | u
 /* eslint-enable prettier/prettier */
 
 export type ClientSocket<TDriver, TContext, TElement, TSelector> = unknown &
-  Request<UniversalCore<TDriver, TElement, TSelector>, 'Core'> &
-  Request<EyesManager<TDriver, TElement, TSelector, 'classic' | 'ufg'>, 'EyesManager', 'manager'> &
-  Request<UniversalEyes<TDriver, TElement, TSelector, 'classic' | 'ufg'>, 'Eyes', 'eyes'> &
+  Request<UniversalCore<TDriver, TContext, TElement, TSelector>, 'Core'> &
+  Request<EyesManager<TDriver, TContext, TElement, TSelector, 'classic' | 'ufg'>, 'EyesManager', 'manager'> &
+  Request<UniversalEyes<TDriver, TContext, TElement, TSelector, 'classic' | 'ufg'>, 'Eyes', 'eyes'> &
   Request<Server, 'Server'> &
   Request<Debug<TDriver, TContext, TElement, TSelector>, 'Debug'> &
   Command<UniversalSpecDriver<TDriver, TContext, TElement, TSelector>, 'Driver'>
 
 export type ServerSocket<TDriver, TContext, TElement, TSelector> = unknown &
-  Command<UniversalCore<TDriver, TElement, TSelector>, 'Core'> &
-  Command<EyesManager<TDriver, TElement, TSelector, 'classic' | 'ufg'>, 'EyesManager', 'manager'> &
-  Command<UniversalEyes<TDriver, TElement, TSelector, 'classic' | 'ufg'>, 'Eyes', 'eyes'> &
+  Command<UniversalCore<TDriver, TContext, TElement, TSelector>, 'Core'> &
+  Command<EyesManager<TDriver, TContext, TElement, TSelector, 'classic' | 'ufg'>, 'EyesManager', 'manager'> &
+  Command<UniversalEyes<TDriver, TContext, TElement, TSelector, 'classic' | 'ufg'>, 'Eyes', 'eyes'> &
   Command<Server, 'Server'> &
   Command<Debug<TDriver, TContext, TElement, TSelector>, 'Debug'> &
   Request<UniversalSpecDriver<TDriver, TContext, TElement, TSelector>, 'Driver'>
