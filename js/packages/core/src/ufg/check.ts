@@ -212,7 +212,6 @@ export function makeCheck<TDriver, TContext, TElement, TSelector>({
 
           return {...result, eyes: baseEyes, renderer}
         } catch (error) {
-          await baseEyes.abort()
           error.info = {eyes: baseEyes}
           throw error
         }

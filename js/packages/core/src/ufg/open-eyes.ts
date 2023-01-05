@@ -100,7 +100,7 @@ export function makeOpenEyes<TDriver, TContext, TElement, TSelector>({
           return close(options)
         }),
         // abort only once
-        abort: utils.general.wrap(makeAbort({storage, controller, logger}), async (abort, options) => {
+        abort: utils.general.wrap(makeAbort({storage, target: driver, spec, controller, logger}), async (abort, options) => {
           if (aborted || closed) return []
           aborted = true
           return abort(options)
