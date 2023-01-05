@@ -1,6 +1,6 @@
 {
   "name": "@applitools/ufg-client",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "homepage": "https://applitools.com",
   "bugs": {
     "url": "https://github.com/applitools/eyes.sdk.javascript1/issues"
@@ -62,7 +62,7 @@
   "devDependencies": {
     "@applitools/bongo": "^2.2.0",
     "@applitools/test-server": "^1.1.16",
-    "@applitools/test-utils": "^1.5.5",
+    "@applitools/test-utils": "^1.5.6",
     "@types/mocha": "^9.1.1",
     "@types/node": "12",
     "@typescript-eslint/eslint-plugin": "^5.22.0",
