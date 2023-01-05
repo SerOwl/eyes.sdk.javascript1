@@ -142,6 +142,9 @@ export class Driver<TDriver, TContext, TElement, TSelector> {
       (/(chrome)/i.test(this.browserName) || (/edge/i.test(this.browserName) && Number(this.browserVersion) > 44))
     )
   }
+  get sessionId(): string {
+    return this._driverInfo?.sessionId
+  }
   get isIE(): boolean {
     return /(internet explorer|ie)/i.test(this.browserName)
   }
