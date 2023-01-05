@@ -1,11 +1,10 @@
 import {makeCore} from '../../../src/classic/core'
-import {By} from 'selenium-webdriver'
 import * as spec from '@applitools/spec-driver-selenium'
 import assert from 'assert'
 import {getTestInfo} from '@applitools/test-utils'
 import {makeServer} from '@applitools/execution-grid-client'
 
-describe.only('self-healing classic', () => {
+describe('self-healing classic', () => {
   let driver, destroyDriver, proxy, core
   const serverUrl = 'https://eyesapi.applitools.com'
 
