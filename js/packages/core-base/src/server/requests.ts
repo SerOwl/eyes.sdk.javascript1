@@ -530,7 +530,7 @@ export function makeEyesRequests({
   }
 
   async function abort({settings, logger = defaultLogger}: {settings?: AbortSettings, logger?: Logger} = {}): Promise<TestResult[]> {
-    logger.log(`Request "abort" called for test ${test.testId}`)
+    logger.log(`Request "abort" called for test ${test.testId} with settings`, settings)
     if (aborted || closed) {
       logger.log(`Request "abort" called for test ${test.testId} that was already stopped`)
       return null
