@@ -211,14 +211,18 @@ class Eyes(object):
     @staticmethod
     def get_viewport_size(driver):
         # type: (WebDriver) -> RectangleSize
-        cmd = CommandExecutor.get_instance(EyesRunner.BASE_AGENT_ID, __version__)
+        cmd = CommandExecutor.get_instance(
+            EyesRunner.PROTOCOL, EyesRunner.BASE_AGENT_ID, __version__
+        )
         result = cmd.core_get_viewport_size(driver)
         return RectangleSize.from_(result)
 
     @staticmethod
     def set_viewport_size(driver, viewport_size):
         # type: (WebDriver, ViewPort) -> None
-        cmd = CommandExecutor.get_instance(EyesRunner.BASE_AGENT_ID, __version__)
+        cmd = CommandExecutor.get_instance(
+            EyesRunner.PROTOCOL, EyesRunner.BASE_AGENT_ID, __version__
+        )
         cmd.core_set_viewport_size(driver, viewport_size)
 
     @property

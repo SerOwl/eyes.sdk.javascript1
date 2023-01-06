@@ -25,7 +25,7 @@ from .schema import (
 )
 
 if TYPE_CHECKING:
-    from typing import Tuple, Union
+    from typing import Tuple, Type, Union
 
     from ..common.selenium import Configuration
     from ..common.utils.custom_types import ViewPort
@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from ..core.extract_text import OCRRegion
     from .fluent import SeleniumCheckSettings
     from .optional_deps import WebDriver
+    from .protocol import USDKProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -47,31 +48,38 @@ class ManagerType(Enum):
 
 class CommandExecutor(object):
     @classmethod
-    def create(cls, name, version):
-        # type: (Text, Text) -> CommandExecutor
-        commands = cls(USDKConnection.create())
+    def create(cls, protocol, name, version):
+        # type: (Type[USDKProtocol], Text, Text) -> CommandExecutor
+        commands = cls(protocol, USDKConnection.create())
         commands.make_core(name, version, getcwd())
         return commands
 
     @classmethod
-    def get_instance(cls, name, version):
-        # type: (Text, Text) -> CommandExecutor
+    def get_instance(cls, protocol, name, version):
+        # type: (Type[USDKProtocol], Text, Text) -> CommandExecutor
         with _instances_lock:
-            key = (name, version)
+            key = (protocol, name, version)
             if key in _instances:
                 return _instances[key]
             else:
-                return _instances.setdefault(key, cls.create(name, version))
+                return _instances.setdefault(key, cls.create(*key))
 
-    def __init__(self, connection):
-        # type: (USDKConnection) -> None
+    def __init__(self, protocol, connection):
+        # type: (Type[USDKProtocol], USDKConnection) -> None
+        self._protocol = protocol
         self._connection = connection
 
     def make_core(self, name, version, cwd):
         # type: (Text, Text, Text) -> None
         self._connection.notification(
             "Core.makeCore",
-            {"name": name, "version": version, "cwd": cwd, "protocol": "webdriver"},
+            {
+                "name": name,
+                "version": version,
+                "cwd": cwd,
+                "protocol": self._protocol.KIND,
+                "commands": self._protocol.COMMANDS,
+            },
         )
 
     def core_make_manager(
