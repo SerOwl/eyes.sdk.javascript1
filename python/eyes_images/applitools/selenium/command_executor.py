@@ -10,19 +10,7 @@ from ..common import TestResults
 from ..common.errors import USDKFailure
 from ..common.target import ImageTarget
 from .connection import USDKConnection
-from .schema import (
-    demarshal_error,
-    marshal_check_settings,
-    marshal_configuration,
-    marshal_delete_test_settings,
-    marshal_enabled_batch_close,
-    marshal_image_target,
-    marshal_locate_settings,
-    marshal_ocr_extract_settings,
-    marshal_ocr_search_settings,
-    marshal_viewport_size,
-    marshal_webdriver_ref,
-)
+from .schema import demarshal_error
 
 if TYPE_CHECKING:
     from typing import Tuple, Type, Union
@@ -97,37 +85,47 @@ class CommandExecutor(object):
 
     def core_get_viewport_size(self, driver):
         # type: (WebDriver) -> dict
-        target = marshal_webdriver_ref(driver)
+        context = self._protocol.context()
+        m = context.marshaller
+        target = m.marshal_webdriver_ref(driver)
         return self._checked_command("Core.getViewportSize", {"target": target})
 
     def core_set_viewport_size(self, driver, size):
         # type: (WebDriver, ViewPort) -> None
-        target = marshal_webdriver_ref(driver)
+        context = self._protocol.context()
+        m = context.marshaller
+        target = m.marshal_webdriver_ref(driver)
         self._checked_command(
             "Core.setViewportSize",
-            {"target": target, "size": marshal_viewport_size(size)},
+            {"target": target, "size": m.marshal_viewport_size(size)},
         )
 
     def core_close_batch(self, close_batch_settings):
         # type: (_EnabledBatchClose) -> None
+        context = self._protocol.context()
+        m = context.marshaller
         settings = []
         for batch_id in close_batch_settings._ids:  # noqa
             close_batch_settings.batch_id = batch_id
-            settings.append(marshal_enabled_batch_close(close_batch_settings))
+            settings.append(m.marshal_enabled_batch_close(close_batch_settings))
         self._checked_command("Core.closeBatch", {"settings": settings})
 
     def core_delete_test(self, test_results):
         # type: (TestResults) -> None
-        settings = marshal_delete_test_settings(test_results)
+        context = self._protocol.context()
+        m = context.marshaller
+        settings = m.marshal_delete_test_settings(test_results)
         self._checked_command("Core.deleteTest", {"settings": settings})
 
     def manager_open_eyes(self, manager, target=None, config=None):
         # type: (dict, Optional[WebDriver], Optional[Configuration]) -> dict
+        context = self._protocol.context()
+        m = context.marshaller
         payload = {"manager": manager}
         if target is not None:
-            payload["target"] = marshal_webdriver_ref(target)
+            payload["target"] = m.marshal_webdriver_ref(target)
         if config is not None:
-            payload["config"] = marshal_configuration(config)
+            payload["config"] = m.marshal_configuration(config)
         return self._checked_command("EyesManager.openEyes", payload)
 
     def manager_close_manager(self, manager, raise_ex, timeout):
@@ -146,23 +144,27 @@ class CommandExecutor(object):
         config,  # type: Configuration
     ):
         # type: (...) -> dict
+        context = self._protocol.context()
+        m = context.marshaller
         payload = {
             "eyes": eyes,
-            "settings": marshal_check_settings(settings),
-            "config": marshal_configuration(config),
+            "settings": m.marshal_check_settings(settings),
+            "config": m.marshal_configuration(config),
         }
         if isinstance(target, ImageTarget):
-            payload["target"] = marshal_image_target(target)
+            payload["target"] = m.marshal_image_target(target)
         else:
-            payload["target"] = marshal_webdriver_ref(target)
+            payload["target"] = m.marshal_webdriver_ref(target)
         return self._checked_command("Eyes.check", payload)
 
     def core_locate(self, target, settings, config):
         # type: (WebDriver, VisualLocatorSettings, Configuration) -> dict
+        context = self._protocol.context()
+        m = context.marshaller
         payload = {
-            "target": marshal_webdriver_ref(target),
-            "settings": marshal_locate_settings(settings),
-            "config": marshal_configuration(config),
+            "target": m.marshal_webdriver_ref(target),
+            "settings": m.marshal_locate_settings(settings),
+            "config": m.marshal_configuration(config),
         }
         return self._checked_command("Core.locate", payload)
 
@@ -174,15 +176,17 @@ class CommandExecutor(object):
         config,  # type: Configuration
     ):
         # type: (...) -> List[Text]
+        context = self._protocol.context()
+        m = context.marshaller
         payload = {
             "eyes": eyes,
-            "settings": marshal_ocr_extract_settings(settings),
-            "config": marshal_configuration(config),
+            "settings": m.marshal_ocr_extract_settings(settings),
+            "config": m.marshal_configuration(config),
         }
         if isinstance(target, ImageTarget):
-            payload["target"] = marshal_image_target(target)
+            payload["target"] = m.marshal_image_target(target)
         else:
-            payload["target"] = marshal_webdriver_ref(target)
+            payload["target"] = m.marshal_webdriver_ref(target)
         return self._checked_command("Eyes.extractText", payload)
 
     def eyes_locate_text(
@@ -193,23 +197,27 @@ class CommandExecutor(object):
         config,  # type: Configuration
     ):
         # type: (...) -> dict
+        context = self._protocol.context()
+        m = context.marshaller
         payload = {
             "eyes": eyes,
-            "settings": marshal_ocr_search_settings(settings),
-            "config": marshal_configuration(config),
+            "settings": m.marshal_ocr_search_settings(settings),
+            "config": m.marshal_configuration(config),
         }
         if isinstance(target, ImageTarget):
-            payload["target"] = marshal_image_target(target)
+            payload["target"] = m.marshal_image_target(target)
         else:
-            payload["target"] = marshal_webdriver_ref(target)
+            payload["target"] = m.marshal_webdriver_ref(target)
         return self._checked_command("Eyes.locateText", payload)
 
     def eyes_close_eyes(self, eyes, throw_err, config, wait_result):
         # type: (dict, bool, Configuration, bool) -> List[dict]
+        context = self._protocol.context()
+        m = context.marshaller
         payload = {
             "eyes": eyes,
             "settings": {"throwErr": throw_err},
-            "config": marshal_configuration(config),
+            "config": m.marshal_configuration(config),
         }
         return self._checked_command("Eyes.close", payload, wait_result)
 

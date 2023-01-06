@@ -583,59 +583,6 @@ class TestResultsSummary(Schema):
         return common.TestResultsSummary(**data)
 
 
-def marshal_webdriver_ref(driver):
-    # type: (WebDriver) -> dict
-    return check_error(StaticDriver().dump(driver))
-
-
-def marshal_image_target(image_target):
-    # type: (ics.ImageTarget) -> dict
-    return check_error(ImageTarget().dump(image_target))
-
-
-def marshal_configuration(configuration):
-    # type: (config.Configuration) -> dict
-    open = check_error(OpenSettings().dump(configuration))
-    config = check_error(EyesConfig().dump(configuration))
-    close = check_error(CloseSettings().dump(configuration))
-    return {"open": open, "screenshot": config, "check": config, "close": close}
-
-
-def marshal_check_settings(check_settings):
-    # type: (cs.SeleniumCheckSettings) -> dict
-    return check_error(CheckSettings().dump(check_settings.values))
-
-
-def marshal_locate_settings(locate_settings):
-    # type: (locators.VisualLocatorSettings) -> dict
-    return check_error(LocateSettings().dump(locate_settings.values))
-
-
-def marshal_ocr_search_settings(search_settings):
-    # type: (extract_text.TextRegionSettings) -> dict
-    return check_error(OCRSearchSettings().dump(search_settings))
-
-
-def marshal_ocr_extract_settings(extract_settings):
-    # type: (t.Tuple[extract_text.OCRRegion, ...]) -> t.List[dict]
-    return [check_error(ExtractTextSettings().dump(s)) for s in extract_settings]
-
-
-def marshal_viewport_size(viewport_size):
-    # type: (ViewPort) -> dict
-    return check_error(Size().dump(viewport_size))
-
-
-def marshal_enabled_batch_close(close_batches):
-    # type: (batch_close._EnabledBatchClose) -> dict # noqa
-    return check_error(CloseBatchSettings().dump(close_batches))
-
-
-def marshal_delete_test_settings(test_results):
-    # type: (common.TestResults) -> dict
-    return check_error(DeleteTestSettings().dump(test_results))
-
-
 def demarshal_match_result(results_dict):
     # type: (dict) -> MatchResult
     return check_error(MatchResult().load(results_dict))
