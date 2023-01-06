@@ -202,12 +202,6 @@ class Proxy(USDKSchema):
     password = String()
 
 
-class StaticDriver(Schema):
-    session_id = String(dump_to="sessionId")
-    server_url = String(attribute="command_executor._url", dump_to="serverUrl")
-    capabilities = Dict()
-
-
 class ImageTarget(USDKSchema):
     image = String()
 

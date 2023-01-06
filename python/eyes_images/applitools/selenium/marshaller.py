@@ -12,7 +12,6 @@ from .schema import (
     OCRSearchSettings,
     OpenSettings,
     Size,
-    StaticDriver,
 )
 from .schema_fields import check_error
 

@@ -55,27 +55,6 @@ class DummyElement(object):
         return "DummyElement({!r})".format(self._id)
 
 
-def test_driver_marshal():
-    serializer = schema.StaticDriver()
-
-    class DummyCommands(object):
-        _url = "https://url"
-
-    class DummyDriver:
-        session_id = "session id"
-        command_executor = DummyCommands()
-        capabilities = {"cap name": "cap value"}
-
-    json, errors = serializer.dump(DummyDriver())
-
-    assert errors == {}
-    assert json == {
-        "sessionId": "session id",
-        "serverUrl": "https://url",
-        "capabilities": {"cap name": "cap value"},
-    }
-
-
 def test_config_marshal(monkeypatch):
     monkeypatch.setenv("APPLITOOLS_BATCH_ID", "ID1")
 
