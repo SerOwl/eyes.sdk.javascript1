@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 
     from applitools.selenium.optional_deps import WebElement
 
+    from ..object_registry import ObjectRegistry
+
 
 class PathNodeValue(object):
     def __eq__(self, other):
@@ -29,9 +31,9 @@ class ElementReference(PathNodeValue):
         # type: (bool) -> Text
         return repr(self.element)
 
-    def _to_dict(self):
-        # type: () -> dict
-        return {"elementId": self.element._id}  # noqa
+    def _to_dict(self, registry):
+        # type: (ObjectRegistry) -> dict
+        return registry.marshal_element(self.element)
 
 
 class ElementSelector(PathNodeValue):
@@ -51,8 +53,8 @@ class ElementSelector(PathNodeValue):
         else:
             return "{}, {!r}".format(_BY_REPR[self.by], self.selector)
 
-    def _to_dict(self):
-        # type: () -> dict
+    def _to_dict(self, _):
+        # type: (ObjectRegistry) -> dict
         return {"type": self.by, "selector": self.selector}
 
 
@@ -65,8 +67,8 @@ class FrameSelector(PathNodeValue):
         # type: (bool) -> Text
         return repr(self.number_or_id_or_name)
 
-    def _to_dict(self):
-        # type: () -> dict
+    def _to_dict(self, _):
+        # type: (ObjectRegistry) -> dict
         return {"selector": self.number_or_id_or_name}
 
 
@@ -76,13 +78,13 @@ class TargetPathLocator(object):
         self.parent = parent
         self.value = value
 
-    def to_dict(self):
-        # type: () -> dict
-        converted = self.value._to_dict()  # noqa
+    def to_dict(self, registry):
+        # type: (ObjectRegistry) -> dict
+        converted = self.value._to_dict(registry)  # noqa
         parent = self.parent
         while parent:
             converted = {parent.FACTORY_METHOD: converted}
-            converted.update(parent.value._to_dict())  # noqa
+            converted.update(parent.value._to_dict(registry))  # noqa
             parent = parent.parent
         return converted
 
