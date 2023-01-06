@@ -42,7 +42,7 @@ class Marshaller(object):
 
     def marshal_webdriver_ref(self, driver):
         # type: (WebDriver) -> dict
-        return check_error(StaticDriver(**self._sa).dump(driver))
+        return self._object_registry.marshal_driver(driver)
 
     def marshal_enabled_batch_close(self, close_batches):
         # type: (_EnabledBatchClose) -> dict
