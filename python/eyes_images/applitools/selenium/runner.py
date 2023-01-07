@@ -14,7 +14,7 @@ from applitools.common.config import DEFAULT_ALL_TEST_RESULTS_TIMEOUT
 
 from .__version__ import __version__
 from .command_executor import CommandExecutor, ManagerType
-from .protocol import SeleniumWebDriver
+from .protocol import PlaywrightSpecDriver, SeleniumWebDriver
 from .schema import demarshal_close_manager_results, demarshal_server_info
 
 if typing.TYPE_CHECKING:
@@ -105,6 +105,13 @@ class VisualGridRunner(EyesRunner):
 class ClassicRunner(EyesRunner):
     def __init__(self):
         super(ClassicRunner, self).__init__(ManagerType.CLASSIC)
+
+
+class PlaywrightRunner(EyesRunner):
+    PROTOCOL = PlaywrightSpecDriver
+
+    def __init__(self):
+        super(PlaywrightRunner, self).__init__(ManagerType.CLASSIC)
 
 
 def log_session_results_and_raise_exception(raise_ex, results):

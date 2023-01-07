@@ -1,4 +1,12 @@
-from .command_context import SeleniumWebdriverCommandContext
+from typing import TYPE_CHECKING
+
+from .command_context import (
+    PlaywrightSpecDriverCommandContext,
+    SeleniumWebdriverCommandContext,
+)
+
+if TYPE_CHECKING:
+    from .connection import USDKConnection
 
 
 class USDKProtocol(object):
@@ -7,10 +15,24 @@ class USDKProtocol(object):
     COMMAND_CONTEXT = None
 
     @classmethod
-    def context(cls):
-        return cls.COMMAND_CONTEXT()
+    def context(cls, connection):
+        # type: (USDKConnection) -> None
+        return cls.COMMAND_CONTEXT(connection)
 
 
 class SeleniumWebDriver(USDKProtocol):
     KIND = "webdriver"
     COMMAND_CONTEXT = SeleniumWebdriverCommandContext
+
+
+class PlaywrightSpecDriver(USDKProtocol):
+    KIND = "specdriver"
+    COMMANDS = [
+        "isDriver",
+        "isElement",
+        "isSelector",
+        "executeScript",
+        "mainContext",
+        "findElement",
+    ]
+    COMMAND_CONTEXT = PlaywrightSpecDriverCommandContext

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from ..core import TextRegionSettings, VisualLocatorSettings
     from ..core.batch_close import _EnabledBatchClose  # noqa
     from ..core.extract_text import OCRRegion
+    from .command_context import CommandContext
     from .fluent import SeleniumCheckSettings
     from .optional_deps import WebDriver
     from .protocol import USDKProtocol
@@ -74,6 +75,7 @@ class CommandExecutor(object):
         self, manager_type, concurrency=None, legacy_concurrency=None, agent_id=None
     ):
         # type: (ManagerType, Optional[int], Optional[int], Optional[Text]) -> dict
+        context = self._protocol.context(self._connection)
         payload = {"type": manager_type.value}
         if concurrency is not None:
             payload["concurrency"] = concurrency
@@ -81,56 +83,61 @@ class CommandExecutor(object):
             payload["legacyConcurrency"] = legacy_concurrency
         if agent_id is not None:
             payload["agentId"] = agent_id
-        return self._checked_command("Core.makeManager", payload)
+        return self._checked_command(context, "Core.makeManager", payload)
 
     def core_get_viewport_size(self, driver):
         # type: (WebDriver) -> dict
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         target = m.marshal_webdriver_ref(driver)
-        return self._checked_command("Core.getViewportSize", {"target": target})
+        return self._checked_command(
+            context, "Core.getViewportSize", {"target": target}
+        )
 
     def core_set_viewport_size(self, driver, size):
         # type: (WebDriver, ViewPort) -> None
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         target = m.marshal_webdriver_ref(driver)
         self._checked_command(
+            context,
             "Core.setViewportSize",
             {"target": target, "size": m.marshal_viewport_size(size)},
         )
 
     def core_close_batch(self, close_batch_settings):
         # type: (_EnabledBatchClose) -> None
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         settings = []
         for batch_id in close_batch_settings._ids:  # noqa
             close_batch_settings.batch_id = batch_id
             settings.append(m.marshal_enabled_batch_close(close_batch_settings))
-        self._checked_command("Core.closeBatch", {"settings": settings})
+        self._checked_command(context, "Core.closeBatch", {"settings": settings})
 
     def core_delete_test(self, test_results):
         # type: (TestResults) -> None
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         settings = m.marshal_delete_test_settings(test_results)
-        self._checked_command("Core.deleteTest", {"settings": settings})
+        self._checked_command(context, "Core.deleteTest", {"settings": settings})
 
     def manager_open_eyes(self, manager, target=None, config=None):
         # type: (dict, Optional[WebDriver], Optional[Configuration]) -> dict
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         payload = {"manager": manager}
         if target is not None:
             payload["target"] = m.marshal_webdriver_ref(target)
         if config is not None:
             payload["config"] = m.marshal_configuration(config)
-        return self._checked_command("EyesManager.openEyes", payload)
+        return self._checked_command(context, "EyesManager.openEyes", payload)
 
     def manager_close_manager(self, manager, raise_ex, timeout):
         # type: (dict, bool, float) -> List[dict]
+        context = self._protocol.context(self._connection)
         return self._checked_command(
+            context,
             "EyesManager.closeManager",
             {"manager": manager, "settings": {"throwErr": raise_ex}},
             wait_timeout=timeout,
@@ -144,7 +151,7 @@ class CommandExecutor(object):
         config,  # type: Configuration
     ):
         # type: (...) -> dict
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         payload = {
             "eyes": eyes,
@@ -155,18 +162,18 @@ class CommandExecutor(object):
             payload["target"] = m.marshal_image_target(target)
         else:
             payload["target"] = m.marshal_webdriver_ref(target)
-        return self._checked_command("Eyes.check", payload)
+        return self._checked_command(context, "Eyes.check", payload)
 
     def core_locate(self, target, settings, config):
         # type: (WebDriver, VisualLocatorSettings, Configuration) -> dict
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         payload = {
             "target": m.marshal_webdriver_ref(target),
             "settings": m.marshal_locate_settings(settings),
             "config": m.marshal_configuration(config),
         }
-        return self._checked_command("Core.locate", payload)
+        return self._checked_command(context, "Core.locate", payload)
 
     def eyes_extract_text(
         self,
@@ -176,7 +183,7 @@ class CommandExecutor(object):
         config,  # type: Configuration
     ):
         # type: (...) -> List[Text]
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         payload = {
             "eyes": eyes,
@@ -187,7 +194,7 @@ class CommandExecutor(object):
             payload["target"] = m.marshal_image_target(target)
         else:
             payload["target"] = m.marshal_webdriver_ref(target)
-        return self._checked_command("Eyes.extractText", payload)
+        return self._checked_command(context, "Eyes.extractText", payload)
 
     def eyes_locate_text(
         self,
@@ -197,7 +204,7 @@ class CommandExecutor(object):
         config,  # type: Configuration
     ):
         # type: (...) -> dict
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         payload = {
             "eyes": eyes,
@@ -208,7 +215,7 @@ class CommandExecutor(object):
             payload["target"] = m.marshal_image_target(target)
         else:
             payload["target"] = m.marshal_webdriver_ref(target)
-        return self._checked_command("Eyes.locateText", payload)
+        return self._checked_command(context, "Eyes.locateText", payload)
 
     def eyes_close_eyes(self, eyes, throw_err, config, wait_result):
         # type: (dict, bool, Configuration, bool) -> List[dict]
@@ -219,19 +226,25 @@ class CommandExecutor(object):
             "settings": {"throwErr": throw_err},
             "config": m.marshal_configuration(config),
         }
-        return self._checked_command("Eyes.close", payload, wait_result)
+        return self._checked_command(context, "Eyes.close", payload, wait_result)
 
     def eyes_abort_eyes(self, eyes, wait_result):
         # type: (dict, bool) -> List[dict]
-        return self._checked_command("Eyes.abort", {"eyes": eyes}, wait_result)
+        context = self._protocol.context(self._connection)
+        return self._checked_command(context, "Eyes.abort", {"eyes": eyes}, wait_result)
 
     def server_get_info(self):
         # type: () -> dict
-        return self._checked_command("Server.getInfo", {})
+        context = self._protocol.context(self._connection)
+        return self._checked_command(context, "Server.getInfo", {})
 
-    def _checked_command(self, name, payload, wait_result=True, wait_timeout=9 * 60):
-        # type: (Text, dict, bool, float) -> Optional[Any]
-        response = self._connection.command(name, payload, wait_result, wait_timeout)
+    def _checked_command(
+        self, command_context, name, payload, wait_result=True, wait_timeout=9 * 60
+    ):
+        # type: (CommandContext, Text, dict, bool, float) -> Optional[Any]
+        response = self._connection.command(
+            command_context, name, payload, wait_result, wait_timeout
+        )
         if wait_result:
             response_payload = response["payload"]
             _check_error(response_payload)
