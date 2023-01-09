@@ -37,8 +37,6 @@ class CommandContext(object):
             arg = self._demarshal_script_args(payload.get("arg", []))
             res = page.evaluate_handle(payload["script"], arg)
             ho = self._handle_to_object(res)
-            if ho is not None and type(ho) != str:
-                ho = dumps(ho)
             return ho
         elif name == "Driver.mainContext":
             page = self.object_registry.demarshal_driver(payload["context"])
