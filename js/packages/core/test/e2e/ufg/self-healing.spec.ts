@@ -4,6 +4,13 @@ import assert from 'assert'
 import {getTestInfo} from '@applitools/test-utils'
 import {makeServer} from '@applitools/execution-grid-client'
 
+async function triggerSelfHealing(driver) {
+  await driver.get('https://demo.applitools.com')
+  await driver.findElement({css: '#log-in'})
+  await driver.executeScript("document.querySelector('#log-in').id = 'log-inn'")
+  await driver.findElement({css: '#log-in'})
+}
+
 describe('self-healing ufg', () => {
   let driver, destroyDriver, proxy, core
   const serverUrl = 'https://eyesapi.applitools.com'
@@ -15,11 +22,6 @@ describe('self-healing ufg', () => {
     })
     ;[driver, destroyDriver] = await spec.build({browser: 'chrome', url: proxy.url})
     core = makeCore({spec, concurrency: 10})
-
-    await driver.get('https://demo.applitools.com')
-    await driver.findElement({css: '#log-in'})
-    await driver.executeScript("document.querySelector('#log-in').id = 'log-inn'")
-    await driver.findElement({css: '#log-in'})
   })
 
   after(async () => {
@@ -28,6 +30,7 @@ describe('self-healing ufg', () => {
   })
 
   it('sends report on close', async () => {
+    await triggerSelfHealing(driver)
     const eyes = await core.openEyes({
       target: driver,
       settings: {
@@ -50,6 +53,8 @@ describe('self-healing ufg', () => {
   })
 
   it('sends report on abort', async () => {
+    await triggerSelfHealing(driver)
+
     const eyes = await core.openEyes({
       target: driver,
       settings: {

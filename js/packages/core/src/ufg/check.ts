@@ -212,6 +212,9 @@ export function makeCheck<TDriver, TContext, TElement, TSelector>({
 
           return {...result, eyes: baseEyes, renderer}
         } catch (error) {
+          const driver = isDriver(target, spec) ? await makeDriver({spec, driver: target, logger}) : null
+          const driverSessionMetadata = await driver?.getSessionMetadata()
+          await baseEyes.abort({settings: {driverSessionMetadata}})
           error.info = {eyes: baseEyes}
           throw error
         }
