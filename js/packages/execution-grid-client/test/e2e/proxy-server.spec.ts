@@ -3,6 +3,7 @@ import {Builder} from 'selenium-webdriver'
 import {makeServer} from '../../src'
 import {spawn} from 'child_process'
 import {Command} from 'selenium-webdriver/lib/command'
+import * as utils from '@applitools/utils'
 
 async function createTunnel() {
   process.env.APPLITOOLS_EG_TUNNEL_PORT = '12345'
@@ -79,6 +80,8 @@ describe('proxy-server', () => {
       assert.deepStrictEqual(result.length, 1)
       assert.ok(result[0].successfulSelector)
       assert.deepStrictEqual(result[0].originalSelector, {using: 'css selector', value: '#log-in'})
+      const noResult = await driver.execute(new Command('getSessionMetadata'))
+      assert.ok(utils.types.isNotDefined(noResult))
     } finally {
       await driver.quit()
     }

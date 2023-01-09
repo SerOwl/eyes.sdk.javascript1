@@ -293,5 +293,7 @@ describe('proxy-server', () => {
     await driver.findElement({css: 'blah'})
     const result = await driver.execute(new Command('getSessionMetadata'))
     assert.deepStrictEqual(result, [expected])
+    const noResult = await driver.execute(new Command('getSessionMetadata'))
+    assert.ok(utils.types.isNotDefined(noResult))
   })
 })
