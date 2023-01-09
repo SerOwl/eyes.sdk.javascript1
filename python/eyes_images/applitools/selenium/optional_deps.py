@@ -23,3 +23,14 @@ except ImportError:
     StaleElementReferenceException = SeleniumNotInstalled
     WebDriver = SeleniumNotInstalled
     WebElement = SeleniumNotInstalled
+
+try:
+    from playwright.sync_api._generated import ElementHandle
+    from playwright.sync_api._generated import Locator as PlaywrightLocator
+except ImportError:
+
+    class PlaywrightNotInstalled(object):
+        """Please install playwright package to use this functionality"""
+
+    PlaywrightLocator = PlaywrightNotInstalled
+    ElementHandle = PlaywrightNotInstalled
