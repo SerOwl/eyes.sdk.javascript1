@@ -34,5 +34,11 @@ class PlaywrightSpecDriver(USDKProtocol):
         "executeScript",
         "mainContext",
         "findElement",
+        "takeScreenshot",
+        "getTitle",
+        "getUrl",
+        "getDriverInfo",
+        "getViewportSize",
+        "setViewportSize",
     ]
     COMMAND_CONTEXT = PlaywrightSpecDriverCommandContext

@@ -219,7 +219,7 @@ class CommandExecutor(object):
 
     def eyes_close_eyes(self, eyes, throw_err, config, wait_result):
         # type: (dict, bool, Configuration, bool) -> List[dict]
-        context = self._protocol.context()
+        context = self._protocol.context(self._connection)
         m = context.marshaller
         payload = {
             "eyes": eyes,

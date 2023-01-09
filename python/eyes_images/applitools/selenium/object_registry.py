@@ -46,13 +46,15 @@ class PlaywrightSpecDriverObjectRegistry(ObjectRegistry):
         return self._id2obj(obj["applitools-ref-id"])
 
     def marshal_element(self, element):
-        return {"applitools-ref-id": self._obj2id(element)}
+        res = {"applitools-ref-id": self._obj2id(element), "type": "element"}
+        return res
 
     def demarshal_element(self, obj):
         return self._id2obj(obj["applitools-ref-id"])
 
     def marshal_node(self, node):
-        return {"applitools-ref-id": self._obj2id(node)}
+        res = {"applitools-ref-id": self._obj2id(node), "type": "element"}
+        return res
 
     def demarshal_node(self, obj):
         return self._id2obj(obj["applitools-ref-id"])

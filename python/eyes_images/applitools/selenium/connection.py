@@ -126,7 +126,11 @@ class USDKConnection(object):
 
 
 def command_key(response):
-    obj_id = response["payload"]["context"]["applitools-ref-id"]
+    payload = response["payload"]
+    if "context" in payload:
+        obj_id = payload["context"]["applitools-ref-id"]
+    else:
+        obj_id = payload["driver"]["applitools-ref-id"]  # Driver.takeScreenshot
     return obj_id.split("-")[0]
 
 

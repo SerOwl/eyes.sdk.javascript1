@@ -15,4 +15,7 @@ def test_playwright_eyes_open():
         page.goto("http://whatsmyuseragent.org/")
         runner = PlaywrightRunner()
         eyes = Eyes(runner)
+        eyes.configure.set_viewport_size({"width": 800, "height": 600})
         eyes.open(page, "Playwright", "Eyes open test")
+        eyes.check_window(fully=False)
+        eyes.close()
