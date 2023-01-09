@@ -20,9 +20,9 @@ Apollo SDK:
     - 
 "@applitools/eyes-webdriverio":
   feature:
-    - Upgrade to wdio@8
+    - 
   bug-fix:
-    - Additional internal event logs
+    - 
 "@applitools/eyes-playwright":
   feature:
     - 
@@ -86,7 +86,7 @@ Apollo SDK:
     - 
 "@applitools/eyes-storybook":
   feature:
-    - Additional internal event logs
+    - 
   bug-fix:
     - 
 "@applitools/eyes-webdriverio5-service":
