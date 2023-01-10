@@ -41,6 +41,8 @@ export function makeOpenEyes<TDriver, TContext, TElement, TSelector>({
       eyes ? 'predefined eyes' : '',
     )
     const driver = target && (await makeDriver({spec, driver: target, logger, customConfig: {disableHelper: true}}))
+    settings.environment ??= {}
+    settings.environment.egSessionId = driver.isExecutionGrid ? driver.sessionId : null
 
     if (driver && !eyes) {
       const currentContext = driver.currentContext

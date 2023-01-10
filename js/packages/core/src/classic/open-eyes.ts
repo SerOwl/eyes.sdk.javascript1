@@ -41,6 +41,7 @@ export function makeOpenEyes<TDriver, TContext, TElement, TSelector>({
     const driver = target && (await makeDriver({spec, driver: target, logger, customConfig: settings}))
     if (driver && !eyes) {
       const currentContext = driver.currentContext
+      settings.environment.egSessionId = driver.isExecutionGrid ? driver.sessionId : null
       settings.environment ??= {}
       if (!settings.environment.viewportSize || driver.isMobile) {
         const size = await driver.getViewportSize()
