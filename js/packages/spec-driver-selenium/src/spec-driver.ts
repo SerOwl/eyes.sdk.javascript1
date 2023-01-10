@@ -193,13 +193,10 @@ export async function setWindowSize(driver: Driver, size: Size) {
     else await executeCustomCommand(driver, new Command('setWindowSize').setParameters({...size}))
   }
 }
+// NOTE: this command is meant to be called when running with the eg-client
+// otherwise it will not be implemented on the driver and throw
 export async function getSessionMetadata(driver: Driver): Promise<[] | void> {
-  try {
-    return await executeCustomCommand(driver, new Command('getSessionMetadata'))
-  } catch (error) {
-    if (/unknown command/.test(error.message)) return
-    throw error
-  }
+  return await executeCustomCommand(driver, new Command('getSessionMetadata'))
 }
 export async function getCookies(driver: Driver, context?: boolean): Promise<Cookie[]> {
   if (context) return driver.manage().getCookies()

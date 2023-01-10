@@ -155,7 +155,7 @@ describe('webdriver spec driver', async () => {
     })
     it('getSessionMetadata()', async () => {
       // when driver doens't respond to the command route
-      assert.deepStrictEqual(await spec.getSessionMetadata(driver), undefined)
+      await assert.rejects(async () => await spec.getSessionMetadata(driver), {message: /unknown command/})
 
       // when the driver does
       // TODO: replace w/ a proper e2e test
