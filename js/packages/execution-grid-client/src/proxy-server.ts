@@ -102,6 +102,10 @@ export function makeServer({
         const sessionMetadata = metadata.get(sessionId)
         metadata.delete(sessionId)
         response.writeHead(200).end(JSON.stringify({value: sessionMetadata}))
+      } else if (request.method === 'GET' && /^\/session\/[^\/]+\/?$/.test(request.url)) {
+        const sessionDetails = {sessionId: getSessionId(request.url), applitools: true}
+        requestLogger.log('Session details requested, returning', sessionDetails)
+        response.writeHead(200).end(JSON.stringify({value: sessionDetails}))
       } else {
         requestLogger.log('Passthrough request')
         return await proxyRequest({request, response, logger: requestLogger})

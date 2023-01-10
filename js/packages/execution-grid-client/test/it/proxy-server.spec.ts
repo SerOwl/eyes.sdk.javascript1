@@ -266,6 +266,30 @@ describe('proxy-server', () => {
     )
   })
 
+  it('returns session details', async () => {
+    proxy = await makeServer({resolveUrls: false})
+    const sessionId = 'session-guid'
+    nock('https://exec-wus.applitools.com')
+      .persist()
+      .post('/session')
+      .reply(200, {value: {capabilities: {}, sessionId}})
+
+    nock('https://exec-wus.applitools.com')
+      .persist()
+      .get(`/session/${sessionId}`)
+      .reply(200, {
+        value: {
+          sessionId,
+          applitools: true,
+        },
+      })
+
+    const driver = await new Builder().forBrowser('chrome').usingServer(proxy.url).build()
+    driver.getExecutor().defineCommand('getSessionDetails', 'GET', '/session/:sessionId')
+    const result = await driver.execute(new Command('getSessionDetails'))
+    assert.deepStrictEqual(result, {sessionId, applitools: true})
+  })
+
   it('find element works with self healing', async () => {
     proxy = await makeServer({resolveUrls: false, useSelfHealing: true})
     const expected = {
