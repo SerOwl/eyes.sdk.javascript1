@@ -142,14 +142,18 @@ export class Driver<TDriver, TContext, TElement, TSelector> {
       (/(chrome)/i.test(this.browserName) || (/edge/i.test(this.browserName) && Number(this.browserVersion) > 44))
     )
   }
-  get sessionId(): string {
-    return this._driverInfo?.sessionId
-  }
   get isIE(): boolean {
     return /(internet explorer|ie)/i.test(this.browserName)
   }
   get isEdgeLegacy(): boolean {
     return /edge/i.test(this.browserName) && Number(this.browserVersion) <= 44
+  }
+  get sessionId(): string {
+    return this._driverInfo?.sessionId
+  }
+  get isExecutionGrid(): boolean {
+    if (!!this._driverInfo?.isExecutionGrid) return true
+    return /exec-wus.applitools.com/.test(this._spec?.extractHostName?.(this.target))
   }
 
   updateCurrentContext(context: Context<TDriver, TContext, TElement, TSelector>): void {
@@ -409,7 +413,7 @@ export class Driver<TDriver, TContext, TElement, TSelector> {
   // end world
 
   async getSessionMetadata(): Promise<any> {
-    return await this._spec?.getSessionMetadata(this.target)
+    if (this.isExecutionGrid) return await this._spec?.getSessionMetadata(this.target)
   }
 
   async refreshContexts(): Promise<Context<TDriver, TContext, TElement, TSelector>> {

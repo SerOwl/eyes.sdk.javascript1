@@ -35,6 +35,7 @@ export type DriverInfo = {
     allCookies?: boolean
     canExecuteOnlyFunctionScripts?: boolean
   }
+  isExecutionGrid?: boolean
 }
 
 export type WaitOptions = {
