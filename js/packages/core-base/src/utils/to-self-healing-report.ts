@@ -1,6 +1,6 @@
-import type {DriverSessionMetadata, SelfHealingReport} from '../types'
+import type {TestMetadata, SelfHealingReport} from '../types'
 
-export function toSelfHealingReport(input: DriverSessionMetadata): SelfHealingReport {
+export function toSelfHealingReport(input: TestMetadata): SelfHealingReport {
   const result = {
     operations: []
   }

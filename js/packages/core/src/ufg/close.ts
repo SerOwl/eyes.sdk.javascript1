@@ -37,9 +37,9 @@ export function makeClose<TDriver, TContext, TElement, TSelector>({
           const [{eyes, renderer}] = await Promise.all(promises)
 
           const driver = isDriver(target, spec) ? await makeDriver({spec, driver: target, logger}) : null
-          const driverSessionMetadata = await driver?.getSessionMetadata()
+          const testMetadata = await driver?.getSessionMetadata()
 
-          const [result] = await eyes.close({settings: {...settings, driverSessionMetadata}, logger})
+          const [result] = await eyes.close({settings: {...settings, testMetadata}, logger})
           return {...result, renderer}
         } catch (error) {
           await error.info?.eyes?.abort({logger})

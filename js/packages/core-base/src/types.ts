@@ -253,24 +253,22 @@ export type SelfHealingReport = {
   operations: {timestamp: string; old: string; new: string}[]
 }
 
-export type DriverSessionMetadata = any[]
+export type TestMetadata = Record<string, any>[]
 
-export interface CloseSettings {
+export interface ReportSelfHealingSettings {
+  testMetadata?: TestMetadata
+}
+
+export interface CloseSettings extends ReportSelfHealingSettings {
   updateBaselineIfNew?: boolean
   updateBaselineIfDifferent?: boolean
   /** @internal */
   userCommandId?: string
-  driverSessionMetadata?: DriverSessionMetadata
 }
 
-export interface AbortSettings {
+export interface AbortSettings extends ReportSelfHealingSettings {
   /** @internal */
   userCommandId?: string
-  driverSessionMetadata?: DriverSessionMetadata
-}
-
-export interface ReportSelfHealingSettings {
-  driverSessionMetadata?: DriverSessionMetadata
 }
 
 type TestResultsStatus = 'Passed' | 'Unresolved' | 'Failed'

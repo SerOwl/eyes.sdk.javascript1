@@ -555,12 +555,12 @@ export function makeEyesRequests({
 
   async function reportSelfHealing({settings, logger = defaultLogger}: {settings: ReportSelfHealingSettings, logger?: Logger}): Promise<void> { 
     try {
-      if (utils.types.isNull(settings?.driverSessionMetadata) || utils.types.isEmpty(settings?.driverSessionMetadata)) return
+      if (utils.types.isNull(settings?.testMetadata) || utils.types.isEmpty(settings?.testMetadata)) return
       logger.log('Request "reportSelfHealing" called')
       await req(`/api/sessions/running/${encodeURIComponent(test.testId)}/selfhealdata`, {
         name: 'reportSelfHealing',
         method: 'PUT',
-        body: toSelfHealingReport(settings.driverSessionMetadata),
+        body: toSelfHealingReport(settings.testMetadata),
         expected: 200,
         logger,
       })

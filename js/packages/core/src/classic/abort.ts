@@ -25,9 +25,9 @@ export function makeAbort<TDriver, TContext, TElement, TSelector>({
     logger?: Logger
   } = {}): Promise<TestResult[]> {
     const driver = isDriver(target, spec) ? await makeDriver({spec, driver: target, logger}) : null
-    const driverSessionMetadata = await driver?.getSessionMetadata()
+    const testMetadata = await driver?.getSessionMetadata()
 
     const [baseEyes] = await eyes.getBaseEyes()
-    return await baseEyes.abort({settings: {...settings, driverSessionMetadata}, logger})
+    return await baseEyes.abort({settings: {...settings, testMetadata}, logger})
   }
 }
